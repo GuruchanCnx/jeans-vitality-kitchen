@@ -1,3 +1,4 @@
+```jsx
 import React, { useState, useEffect } from 'react';
 import { Calendar, Utensils, Leaf, Heart, Activity, Menu, X, ChevronUp, Coffee, Book, Scissors, Clock, ChefHat, Sun, Moon, Minus, Plus } from 'lucide-react';
 
@@ -755,58 +756,11 @@ const App = () => {
         ? 'bg-gradient-to-br from-amber-50 to-orange-50 text-gray-900' 
         : 'bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100'
     } ${fontSizeClasses[fontSize]}`}>
-      {/* Accessibility Controls */}
-      <div className={`fixed top-4 right-4 z-50 flex flex-col space-y-2 ${
-        theme === 'light' ? 'bg-white shadow-lg' : 'bg-gray-800 shadow-xl'
-      } rounded-lg p-3`}>
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className={`p-2 rounded-full transition-colors duration-200 ${
-            theme === 'light' 
-              ? 'text-amber-600 hover:bg-amber-100' 
-              : 'text-amber-400 hover:bg-gray-700'
-          }`}
-          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-        >
-          {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-        </button>
-        
-        {/* Font Size Controls */}
-        <div className={`flex flex-col space-y-1 p-2 rounded-lg ${
-          theme === 'light' ? 'bg-amber-50' : 'bg-gray-700'
-        }`}>
-          <button
-            onClick={decreaseFontSize}
-            className={`p-1 rounded transition-colors duration-200 ${
-              theme === 'light' 
-                ? 'text-gray-700 hover:bg-gray-200' 
-                : 'text-gray-300 hover:bg-gray-600'
-            }`}
-            aria-label="Decrease font size"
-          >
-            <Minus className="h-4 w-4" />
-          </button>
-          <button
-            onClick={increaseFontSize}
-            className={`p-1 rounded transition-colors duration-200 ${
-              theme === 'light' 
-                ? 'text-gray-700 hover:bg-gray-200' 
-                : 'text-gray-300 hover:bg-gray-600'
-            }`}
-            aria-label="Increase font size"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Navigation Bar */}
-      <nav className={`sticky top-0 z-40 shadow-lg ${
-        theme === 'light' ? 'bg-white' : 'bg-gray-800'
-      }`}>
+      {/* Enhanced Navigation Bar with iOS Liquid Glass Design */}
+      <nav className={`sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-white/20 dark:border-gray-700/50 shadow-lg`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
+            {/* Logo Section */}
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2">
                 <Coffee className={`h-6 w-6 ${theme === 'light' ? 'text-amber-600' : 'text-amber-400'}`} />
@@ -816,31 +770,84 @@ const App = () => {
               </div>
             </div>
             
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex space-x-1">
-              {mealPlan.map((day) => (
+            {/* Desktop Navigation - Always Visible */}
+            <div className="hidden md:flex items-center space-x-4">
+              {/* Font Size Controls */}
+              <div className={`flex items-center space-x-1 p-2 rounded-xl backdrop-blur-sm bg-white/60 dark:bg-gray-700/60 border border-white/30 dark:border-gray-600/30`}>
                 <button
-                  key={day.id}
-                  onClick={() => scrollToDay(day.id)}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                    theme === 'light'
-                      ? 'text-gray-700 hover:text-amber-600 hover:bg-amber-50'
-                      : 'text-gray-300 hover:text-amber-400 hover:bg-gray-700'
+                  onClick={decreaseFontSize}
+                  className={`p-1 rounded-lg transition-all duration-200 hover:bg-white/30 dark:hover:bg-gray-600/30 ${
+                    theme === 'light' ? 'text-gray-700' : 'text-gray-300'
                   }`}
+                  aria-label="Decrease font size"
                 >
-                  {day.day}
+                  <Minus className="h-4 w-4" />
                 </button>
-              ))}
+                <span className={`text-xs font-medium px-2 ${
+                  theme === 'light' ? 'text-gray-700' : 'text-gray-300'
+                }`}>
+                  A
+                </span>
+                <button
+                  onClick={increaseFontSize}
+                  className={`p-1 rounded-lg transition-all duration-200 hover:bg-white/30 dark:hover:bg-gray-600/30 ${
+                    theme === 'light' ? 'text-gray-700' : 'text-gray-300'
+                  }`}
+                  aria-label="Increase font size"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+              
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-xl backdrop-blur-sm bg-white/60 dark:bg-gray-700/60 border border-white/30 dark:border-gray-600/30 transition-all duration-200 hover:bg-white/40 dark:hover:bg-gray-700/40 ${
+                  theme === 'light' ? 'text-amber-600' : 'text-amber-400'
+                }`}
+                aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              >
+                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </button>
+              
+              {/* Desktop Navigation Links */}
+              <div className="flex space-x-1 ml-4">
+                {mealPlan.map((day) => (
+                  <button
+                    key={day.id}
+                    onClick={() => scrollToDay(day.id)}
+                    className={`px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 backdrop-blur-sm hover:bg-white/40 dark:hover:bg-gray-700/40 border border-transparent hover:border-white/30 dark:hover:border-gray-600/30 ${
+                      theme === 'light'
+                        ? 'text-gray-700 hover:text-amber-600'
+                        : 'text-gray-300 hover:text-amber-400'
+                    }`}
+                  >
+                    {day.day}
+                  </button>
+                ))}
+              </div>
             </div>
             
             {/* Mobile menu button */}
-            <div className="md:hidden">
+            <div className="md:hidden flex items-center space-x-2">
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-lg transition-colors duration-200 ${
+                  theme === 'light' 
+                    ? 'text-amber-600 hover:bg-amber-100' 
+                    : 'text-amber-400 hover:bg-gray-700'
+                }`}
+                aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              >
+                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </button>
+              
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`p-2 rounded-md transition-colors duration-200 ${
+                className={`p-2 rounded-lg transition-colors duration-200 ${
                   theme === 'light'
-                    ? 'text-gray-700 hover:text-amber-600 hover:bg-amber-50'
-                    : 'text-gray-300 hover:text-amber-400 hover:bg-gray-700'
+                    ? 'text-gray-700 hover:bg-amber-100'
+                    : 'text-gray-300 hover:bg-gray-700'
                 }`}
               >
                 {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -851,37 +858,61 @@ const App = () => {
         
         {/* Mobile Navigation Menu */}
         {isMenuOpen && (
-          <div className={`md:hidden border-t ${
-            theme === 'light' ? 'border-gray-200 bg-white' : 'border-gray-700 bg-gray-800'
-          }`}>
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {mealPlan.map((day) => (
+          <div className={`md:hidden border-t backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-white/20 dark:border-gray-700/50`}>
+            <div className="px-4 py-3 space-y-3">
+              {/* Mobile Font Size Controls */}
+              <div className={`flex items-center justify-center space-x-2 p-3 rounded-xl backdrop-blur-sm bg-white/60 dark:bg-gray-700/60 border border-white/30 dark:border-gray-600/30`}>
                 <button
-                  key={day.id}
-                  onClick={() => scrollToDay(day.id)}
-                  className={`block px-3 py-2 text-base font-medium rounded-md w-full text-left transition-colors duration-200 ${
-                    theme === 'light'
-                      ? 'text-gray-700 hover:text-amber-600 hover:bg-amber-50'
-                      : 'text-gray-300 hover:text-amber-400 hover:bg-gray-700'
+                  onClick={decreaseFontSize}
+                  className={`p-2 rounded-lg transition-all duration-200 hover:bg-white/30 dark:hover:bg-gray-600/30 ${
+                    theme === 'light' ? 'text-gray-700' : 'text-gray-300'
                   }`}
+                  aria-label="Decrease font size"
                 >
-                  {day.day}
+                  <Minus className="h-5 w-5" />
                 </button>
-              ))}
+                <span className={`text-sm font-medium ${
+                  theme === 'light' ? 'text-gray-700' : 'text-gray-300'
+                }`}>
+                  Font Size
+                </span>
+                <button
+                  onClick={increaseFontSize}
+                  className={`p-2 rounded-lg transition-all duration-200 hover:bg-white/30 dark:hover:bg-gray-600/30 ${
+                    theme === 'light' ? 'text-gray-700' : 'text-gray-300'
+                  }`}
+                  aria-label="Increase font size"
+                >
+                  <Plus className="h-5 w-5" />
+                </button>
+              </div>
+              
+              {/* Mobile Navigation Links */}
+              <div className="grid grid-cols-2 gap-2">
+                {mealPlan.map((day) => (
+                  <button
+                    key={day.id}
+                    onClick={() => scrollToDay(day.id)}
+                    className={`px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 backdrop-blur-sm hover:bg-white/40 dark:hover:bg-gray-700/40 border border-transparent hover:border-white/30 dark:hover:border-gray-600/30 ${
+                      theme === 'light'
+                        ? 'text-gray-700 hover:text-amber-600'
+                        : 'text-gray-300 hover:text-amber-400'
+                    }`}
+                  >
+                    {day.day}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
       </nav>
 
       {/* Header */}
-      <header className={`shadow-sm border-b ${
-        theme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700'
-      }`}>
+      <header className={`shadow-sm border-b backdrop-blur-md bg-white/70 dark:bg-gray-800/70 border-white/20 dark:border-gray-700/30`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center space-x-3 mb-4">
-            <div className={`p-3 rounded-lg ${
-              theme === 'light' ? 'bg-amber-100' : 'bg-amber-900'
-            }`}>
+            <div className={`p-3 rounded-xl backdrop-blur-sm bg-amber-100/70 dark:bg-amber-900/50 border border-amber-200/50 dark:border-amber-800/30`}>
               <ChefHat className={`h-8 w-8 ${theme === 'light' ? 'text-amber-600' : 'text-amber-400'}`} />
             </div>
             <div>
@@ -895,9 +926,7 @@ const App = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            <div className={`p-4 rounded-lg ${
-              theme === 'light' ? 'bg-amber-50' : 'bg-amber-900'
-            }`}>
+            <div className={`p-4 rounded-xl backdrop-blur-sm bg-amber-50/70 dark:bg-amber-900/30 border border-amber-100/50 dark:border-amber-800/30`}>
               <div className="flex items-center space-x-2 mb-2">
                 <Heart className={`h-5 w-5 ${theme === 'light' ? 'text-red-500' : 'text-red-400'}`} />
                 <span className={`font-semibold ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
@@ -909,9 +938,7 @@ const App = () => {
               </p>
             </div>
             
-            <div className={`p-4 rounded-lg ${
-              theme === 'light' ? 'bg-green-50' : 'bg-green-900'
-            }`}>
+            <div className={`p-4 rounded-xl backdrop-blur-sm bg-green-50/70 dark:bg-green-900/30 border border-green-100/50 dark:border-green-800/30`}>
               <div className="flex items-center space-x-2 mb-2">
                 <Activity className={`h-5 w-5 ${theme === 'light' ? 'text-green-500' : 'text-green-400'}`} />
                 <span className={`font-semibold ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
@@ -923,9 +950,7 @@ const App = () => {
               </p>
             </div>
             
-            <div className={`p-4 rounded-lg ${
-              theme === 'light' ? 'bg-purple-50' : 'bg-purple-900'
-            }`}>
+            <div className={`p-4 rounded-xl backdrop-blur-sm bg-purple-50/70 dark:bg-purple-900/30 border border-purple-100/50 dark:border-purple-800/30`}>
               <div className="flex items-center space-x-2 mb-2">
                 <Utensils className={`h-5 w-5 ${theme === 'light' ? 'text-purple-500' : 'text-purple-400'}`} />
                 <span className={`font-semibold ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
@@ -943,9 +968,7 @@ const App = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Guidelines Section */}
-        <div className={`rounded-xl shadow-md p-6 mb-8 ${
-          theme === 'light' ? 'bg-white' : 'bg-gray-800'
-        }`}>
+        <div className={`rounded-2xl shadow-lg p-6 mb-8 backdrop-blur-sm bg-white/70 dark:bg-gray-800/70 border border-white/30 dark:border-gray-700/30`}>
           <h2 className={`text-2xl font-bold mb-4 flex items-center ${
             theme === 'light' ? 'text-gray-900' : 'text-white'
           }`}>
@@ -965,9 +988,7 @@ const App = () => {
         {/* Meal Plan */}
         <div className="space-y-6">
           {mealPlan.map((dayPlan, index) => (
-            <div key={index} id={dayPlan.id} className={`rounded-xl shadow-md overflow-hidden scroll-mt-24 ${
-              theme === 'light' ? 'bg-white' : 'bg-gray-800'
-            }`}>
+            <div key={index} id={dayPlan.id} className={`rounded-2xl shadow-lg overflow-hidden scroll-mt-24 backdrop-blur-sm bg-white/70 dark:bg-gray-800/70 border border-white/30 dark:border-gray-700/30`}>
               <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-4">
                 <h3 className="text-2xl font-bold text-white">{dayPlan.day}</h3>
               </div>
@@ -979,19 +1000,19 @@ const App = () => {
                     const isExpanded = expandedRecipes[key];
                     
                     return (
-                      <div key={mealType} className={`rounded-lg p-4 transition-shadow duration-200 ${
+                      <div key={mealType} className={`rounded-xl p-4 transition-shadow duration-200 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl ${
                         theme === 'light' 
-                          ? 'border border-gray-200 hover:shadow-md' 
-                          : 'border border-gray-700 hover:shadow-lg hover:border-gray-600'
+                          ? 'bg-white/60 hover:bg-white/80' 
+                          : 'bg-gray-800/60 hover:bg-gray-800/80'
                       }`}>
                         <div className="flex justify-between items-start mb-2">
                           <h4 className={`font-semibold capitalize ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
                             {mealType}
                           </h4>
-                          <span className={`text-xs font-medium px-2 py-1 rounded ${
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full backdrop-blur-sm ${
                             theme === 'light' 
-                              ? 'bg-amber-100 text-amber-800' 
-                              : 'bg-amber-900 text-amber-200'
+                              ? 'bg-amber-100/80 text-amber-800' 
+                              : 'bg-amber-900/60 text-amber-200'
                           }`}>
                             {meal.protein}g protein
                           </span>
@@ -1032,7 +1053,7 @@ const App = () => {
                         
                         {isExpanded && (
                           <div className={`mt-4 pt-4 border-t transition-all duration-300 ${
-                            theme === 'light' ? 'border-gray-100' : 'border-gray-700'
+                            theme === 'light' ? 'border-gray-200/50' : 'border-gray-700/50'
                           }`}>
                             <div className={`flex items-center text-sm mb-2 ${
                               theme === 'light' ? 'text-amber-600' : 'text-amber-400'
@@ -1078,14 +1099,14 @@ const App = () => {
                 </div>
                 
                 <div className={`mt-4 pt-4 border-t ${
-                  theme === 'light' ? 'border-gray-200' : 'border-gray-700'
+                  theme === 'light' ? 'border-gray-200/50' : 'border-gray-700/50'
                 }`}>
                   <div className="flex justify-between items-center">
                     <span className={`font-semibold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
                       Daily Total:
                     </span>
-                    <span className={`font-bold px-3 py-1 rounded-full ${
-                      theme === 'light' ? 'bg-green-100 text-green-800' : 'bg-green-900 text-green-200'
+                    <span className={`font-bold px-3 py-1 rounded-full backdrop-blur-sm ${
+                      theme === 'light' ? 'bg-green-100/80 text-green-800' : 'bg-green-900/60 text-green-200'
                     }`}>
                       {Object.values(dayPlan.meals).reduce((sum, meal) => sum + meal.protein, 0)}g protein
                     </span>
@@ -1097,10 +1118,10 @@ const App = () => {
         </div>
 
         {/* Footer Note */}
-        <div className={`mt-8 rounded-lg p-6 mb-12 ${
+        <div className={`mt-8 rounded-2xl p-6 mb-12 backdrop-blur-sm border ${
           theme === 'light' 
-            ? 'bg-yellow-50 border border-yellow-200' 
-            : 'bg-yellow-900 border border-yellow-800'
+            ? 'bg-yellow-50/70 border-yellow-200/50' 
+            : 'bg-yellow-900/30 border-yellow-800/30'
         }`}>
           <h3 className={`text-lg font-semibold mb-2 ${
             theme === 'light' ? 'text-yellow-800' : 'text-yellow-200'
@@ -1120,10 +1141,10 @@ const App = () => {
       {showBackToTop && (
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 focus:outline-none z-40 ${
+          className={`fixed bottom-6 right-6 p-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-110 focus:outline-none z-40 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 ${
             theme === 'light'
-              ? 'bg-amber-600 hover:bg-amber-700 text-white'
-              : 'bg-amber-700 hover:bg-amber-600 text-white'
+              ? 'bg-amber-600/90 hover:bg-amber-600 text-white'
+              : 'bg-amber-700/90 hover:bg-amber-700 text-white'
           }`}
           aria-label="Back to top"
         >
@@ -1135,3 +1156,4 @@ const App = () => {
 };
 
 export default App;
+```
