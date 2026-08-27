@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Utensils, Leaf, Heart, Activity, Menu, X, ChevronUp, Coffee, Book, Scissors, Clock, ChefHat, Sun, Moon, Minus, Plus } from 'lucide-react';
+import Header from './components/Header';
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -749,166 +750,51 @@ const App = () => {
     "Consider vitamin D and calcium supplementation if recommended by doctor"
   ];
 
+  const navLinks = [
+    { name: 'Home', href: '#home', icon: Coffee },
+    { name: '7-Day Plan', href: '#meal-plan', icon: Calendar },
+    { name: 'Nutrition', href: '#nutrition', icon: Activity },
+    { name: 'Kitchen Tips', href: '#tips', icon: Book },
+  ];
+
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
       theme === 'light' 
         ? 'bg-gradient-to-br from-amber-50 to-orange-50 text-gray-900' 
         : 'bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100'
     } ${fontSizeClasses[fontSize]}`}>
-      {/* Enhanced Navigation Bar with iOS Liquid Glass Design */}
-      <nav className={`sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-white/20 dark:border-gray-700/50 shadow-lg`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo Section */}
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <Coffee className={`h-6 w-6 ${theme === 'light' ? 'text-amber-600' : 'text-amber-400'}`} />
-                <span className={`text-xl font-bold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
-                  Jean's Vitality Kitchen
-                </span>
-              </div>
-            </div>
-            
-            {/* Desktop Navigation - Always Visible */}
-            <div className="hidden md:flex items-center space-x-4">
-              {/* Font Size Controls */}
-              <div className={`flex items-center space-x-1 p-2 rounded-xl backdrop-blur-sm bg-white/60 dark:bg-gray-700/60 border border-white/30 dark:border-gray-600/30`}>
-                <button
-                  onClick={decreaseFontSize}
-                  className={`p-1 rounded-lg transition-all duration-200 hover:bg-white/30 dark:hover:bg-gray-600/30 ${
-                    theme === 'light' ? 'text-gray-700' : 'text-gray-300'
-                  }`}
-                  aria-label="Decrease font size"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <span className={`text-xs font-medium px-2 ${
-                  theme === 'light' ? 'text-gray-700' : 'text-gray-300'
-                }`}>
-                  A
-                </span>
-                <button
-                  onClick={increaseFontSize}
-                  className={`p-1 rounded-lg transition-all duration-200 hover:bg-white/30 dark:hover:bg-gray-600/30 ${
-                    theme === 'light' ? 'text-gray-700' : 'text-gray-300'
-                  }`}
-                  aria-label="Increase font size"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-              
-              {/* Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-xl backdrop-blur-sm bg-white/60 dark:bg-gray-700/60 border border-white/30 dark:border-gray-600/30 transition-all duration-200 hover:bg-white/40 dark:hover:bg-gray-700/40 ${
-                  theme === 'light' ? 'text-amber-600' : 'text-amber-400'
-                }`}
-                aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-              >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-              </button>
-              
-              {/* Desktop Navigation Links */}
-              <div className="flex space-x-1 ml-4">
-                {mealPlan.map((day) => (
-                  <button
-                    key={day.id}
-                    onClick={() => scrollToDay(day.id)}
-                    className={`px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 backdrop-blur-sm hover:bg-white/40 dark:hover:bg-gray-700/40 border border-transparent hover:border-white/30 dark:hover:border-gray-600/30 ${
-                      theme === 'light'
-                        ? 'text-gray-700 hover:text-amber-600'
-                        : 'text-gray-300 hover:text-amber-400'
-                    }`}
-                  >
-                    {day.day}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center space-x-2">
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-colors duration-200 ${
-                  theme === 'light' 
-                    ? 'text-amber-600 hover:bg-amber-100' 
-                    : 'text-amber-400 hover:bg-gray-700'
-                }`}
-                aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-              >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-              </button>
-              
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`p-2 rounded-lg transition-colors duration-200 ${
-                  theme === 'light'
-                    ? 'text-gray-700 hover:bg-amber-100'
-                    : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
-            </div>
+      {/* Responsive Navigation Header Component */}
+      <Header
+        title="Jean's Vitality Kitchen"
+        subtitle="High-Protein Senior Nutrition & Vitality"
+        links={navLinks}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        fontSizeControls={
+          <div className="flex items-center space-x-1 p-1.5 rounded-xl backdrop-blur-sm bg-amber-50/80 dark:bg-gray-800/80 border border-amber-200/40 dark:border-gray-700/60">
+            <button
+              onClick={decreaseFontSize}
+              className="p-1 rounded-lg transition-all duration-200 hover:bg-white/60 dark:hover:bg-gray-700/60 text-gray-700 dark:text-gray-300"
+              aria-label="Decrease font size"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+            <span className="text-xs font-semibold px-2 text-gray-700 dark:text-gray-300">
+              A
+            </span>
+            <button
+              onClick={increaseFontSize}
+              className="p-1 rounded-lg transition-all duration-200 hover:bg-white/60 dark:hover:bg-gray-700/60 text-gray-700 dark:text-gray-300"
+              aria-label="Increase font size"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
           </div>
-        </div>
-        
-        {/* Mobile Navigation Menu */}
-        {isMenuOpen && (
-          <div className={`md:hidden border-t backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-white/20 dark:border-gray-700/50`}>
-            <div className="px-4 py-3 space-y-3">
-              {/* Mobile Font Size Controls */}
-              <div className={`flex items-center justify-center space-x-2 p-3 rounded-xl backdrop-blur-sm bg-white/60 dark:bg-gray-700/60 border border-white/30 dark:border-gray-600/30`}>
-                <button
-                  onClick={decreaseFontSize}
-                  className={`p-2 rounded-lg transition-all duration-200 hover:bg-white/30 dark:hover:bg-gray-600/30 ${
-                    theme === 'light' ? 'text-gray-700' : 'text-gray-300'
-                  }`}
-                  aria-label="Decrease font size"
-                >
-                  <Minus className="h-5 w-5" />
-                </button>
-                <span className={`text-sm font-medium ${
-                  theme === 'light' ? 'text-gray-700' : 'text-gray-300'
-                }`}>
-                  Font Size
-                </span>
-                <button
-                  onClick={increaseFontSize}
-                  className={`p-2 rounded-lg transition-all duration-200 hover:bg-white/30 dark:hover:bg-gray-600/30 ${
-                    theme === 'light' ? 'text-gray-700' : 'text-gray-300'
-                  }`}
-                  aria-label="Increase font size"
-                >
-                  <Plus className="h-5 w-5" />
-                </button>
-              </div>
-              
-              {/* Mobile Navigation Links */}
-              <div className="grid grid-cols-2 gap-2">
-                {mealPlan.map((day) => (
-                  <button
-                    key={day.id}
-                    onClick={() => scrollToDay(day.id)}
-                    className={`px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 backdrop-blur-sm hover:bg-white/40 dark:hover:bg-gray-700/40 border border-transparent hover:border-white/30 dark:hover:border-gray-600/30 ${
-                      theme === 'light'
-                        ? 'text-gray-700 hover:text-amber-600'
-                        : 'text-gray-300 hover:text-amber-400'
-                    }`}
-                  >
-                    {day.day}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </nav>
+        }
+      />
 
-      {/* Header */}
-      <header className={`shadow-sm border-b backdrop-blur-md bg-white/70 dark:bg-gray-800/70 border-white/20 dark:border-gray-700/30`}>
+      {/* Hero / Banner Header */}
+      <header id="home" className={`shadow-sm border-b backdrop-blur-md bg-white/70 dark:bg-gray-800/70 border-white/20 dark:border-gray-700/30`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center space-x-3 mb-4">
             <div className={`p-3 rounded-xl backdrop-blur-sm bg-amber-100/70 dark:bg-amber-900/50 border border-amber-200/50 dark:border-amber-800/30`}>
@@ -924,7 +810,7 @@ const App = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div id="nutrition" className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             <div className={`p-4 rounded-xl backdrop-blur-sm bg-amber-50/70 dark:bg-amber-900/30 border border-amber-100/50 dark:border-amber-800/30`}>
               <div className="flex items-center space-x-2 mb-2">
                 <Heart className={`h-5 w-5 ${theme === 'light' ? 'text-red-500' : 'text-red-400'}`} />
@@ -967,7 +853,7 @@ const App = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Guidelines Section */}
-        <div className={`rounded-2xl shadow-lg p-6 mb-8 backdrop-blur-sm bg-white/70 dark:bg-gray-800/70 border border-white/30 dark:border-gray-700/30`}>
+        <div id="tips" className={`rounded-2xl shadow-lg p-6 mb-8 scroll-mt-24 backdrop-blur-sm bg-white/70 dark:bg-gray-800/70 border border-white/30 dark:border-gray-700/30`}>
           <h2 className={`text-2xl font-bold mb-4 flex items-center ${
             theme === 'light' ? 'text-gray-900' : 'text-white'
           }`}>
@@ -985,7 +871,7 @@ const App = () => {
         </div>
 
         {/* Meal Plan */}
-        <div className="space-y-6">
+        <div id="meal-plan" className="space-y-6 scroll-mt-24">
           {mealPlan.map((dayPlan, index) => (
             <div key={index} id={dayPlan.id} className={`rounded-2xl shadow-lg overflow-hidden scroll-mt-24 backdrop-blur-sm bg-white/70 dark:bg-gray-800/70 border border-white/30 dark:border-gray-700/30`}>
               <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-4">
@@ -1155,4 +1041,3 @@ const App = () => {
 };
 
 export default App;
-```
