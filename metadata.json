@@ -1,6 +1,6 @@
 {
   "name": "Jean's Vitality Kitchen",
-  "description": "Jean's 7-Day High-Protein Meal Plan for active seniors with daily recipes, nutrition info, and kitchen wisdom.",
+  "description": "Jean's 7-Day High-Protein Meal Plan for active seniors featuring recipe cards, senior-focused nutrition breakdown modals, and an interactive aggregated shopping list checklist.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

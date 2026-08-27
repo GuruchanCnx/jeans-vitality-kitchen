@@ -1,18 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Utensils, Leaf, Heart, Activity, Menu, X, ChevronUp, Coffee, Book, Scissors, Clock, ChefHat, Sun, Moon, Minus, Plus } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Calendar, Utensils, Leaf, Heart, Activity, Menu, X, ChevronUp, Coffee, Book, Scissors, Clock, ChefHat, Sun, Moon, Minus, Plus, Filter, Sparkles, CheckCircle2, AlertCircle, Search, RotateCcw, ChevronDown, LayoutGrid, ListFilter, ShoppingCart } from 'lucide-react';
 import Header from './components/Header';
+import Hero from './components/Hero';
+import SearchBar from './components/SearchBar';
+import RecipeList from './components/RecipeList';
+import ShoppingList from './components/ShoppingList';
+import WaterTracker from './components/WaterTracker';
+import { getMealMeta } from './data/recipeImages';
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [expandedRecipes, setExpandedRecipes] = useState({});
   const [theme, setTheme] = useState('light');
+  const [highContrast, setHighContrast] = useState(() => {
+    try {
+      return localStorage.getItem('jeans_high_contrast') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [fontSize, setFontSize] = useState('medium');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all'); // 'all' | 'vegetarian' | 'quick' | 'high-protein'
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' (RecipeList) | 'daily' (7-Day schedule)
 
-  // Apply theme class to body
+  // Apply theme and high-contrast classes to body
   useEffect(() => {
-    document.body.className = theme;
-  }, [theme]);
+    try {
+      localStorage.setItem('jeans_high_contrast', String(highContrast));
+    } catch {
+      // Ignore in restricted iframe contexts
+    }
+    document.body.className = `${theme} ${highContrast ? 'high-contrast' : ''}`;
+  }, [theme, highContrast]);
 
   // Font size mapping
   const fontSizeClasses = {
@@ -35,10 +56,71 @@ const App = () => {
   };
 
   const scrollToDay = (dayId) => {
-    const element = document.getElementById(dayId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setIsMenuOpen(false);
+    if (!dayId) return;
+
+    if (dayId === 'shopping-list') {
+      setViewMode('shopping');
+      setTimeout(() => {
+        const el = document.getElementById('shopping-list') || document.getElementById('recipes');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+      return;
+    }
+
+    if (dayId === 'meal-plan' || dayId === 'recipes') {
+      setViewMode('daily');
+      setTimeout(() => {
+        const el = document.getElementById('recipes') || document.getElementById('meal-plan');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+      return;
+    }
+
+    // When jumping to a specific day:
+    // 1. Switch viewMode to 'daily' so the element is rendered in the DOM
+    setViewMode('daily');
+
+    // 2. Clear any search filter that might hide the day
+    setSearchQuery('');
+    setActiveCategory('all');
+
+    // 3. Smooth scroll to the day card and apply a subtle attention highlight ring
+    setTimeout(() => {
+      const element = document.getElementById(dayId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        element.classList.add('ring-4', 'ring-amber-500/50');
+        setTimeout(() => {
+          element.classList.remove('ring-4', 'ring-amber-500/50');
+        }, 2200);
+        setIsMenuOpen(false);
+      }
+    }, 100);
+  };
+
+  const handleNavigate = (href) => {
+    if (!href) return;
+    if (href === '#home' || href === '#top') {
+      scrollToTop();
+    } else if (href === '#shopping-list') {
+      setViewMode('shopping');
+      setTimeout(() => {
+        const el = document.getElementById('shopping-list') || document.getElementById('recipes');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    } else if (href === '#recipes') {
+      setViewMode('cards');
+      setTimeout(() => {
+        document.getElementById('recipes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    } else if (href === '#meal-plan') {
+      setViewMode('daily');
+      setTimeout(() => {
+        document.getElementById('recipes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    } else {
+      const targetId = href.startsWith('#') ? href.substring(1) : href;
+      scrollToDay(targetId);
     }
   };
 
@@ -52,6 +134,10 @@ const App = () => {
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const toggleHighContrast = () => {
+    setHighContrast(prev => !prev);
   };
 
   const increaseFontSize = () => {
@@ -303,42 +389,43 @@ const App = () => {
           }
         },
         dinner: {
-          description: "Baked cod (4 oz) with sweet potato and green beans",
+          description: "Baked chicken breast (4 oz) with sweet potato and green beans",
           protein: 30,
           vegetarian: false,
           recipe: {
             ingredients: [
-              "4 oz cod fillet",
+              "4 oz skinless chicken breast",
               "1 medium sweet potato, cubed",
-              "1 cup green beans, trimmed",
+              "1 cup fresh green beans, trimmed",
               "1 tablespoon olive oil",
-              "Lemon juice, garlic powder, salt, and pepper"
+              "Lemon juice, garlic powder, rosemary, salt, and black pepper"
             ],
             instructions: [
               "Preheat oven to 400°F (200°C).",
-              "Toss sweet potato cubes with olive oil, salt, and pepper. Roast for 20 minutes.",
-              "Add green beans to the pan and continue roasting for 10 more minutes.",
-              "Season cod with lemon juice, garlic powder, salt, and pepper.",
-              "Place cod on a separate baking sheet and bake for 12-15 minutes until flaky.",
-              "Everything comes out perfectly timed - dinner is served!"
+              "Toss sweet potato cubes with olive oil, rosemary, salt, and pepper. Roast for 15 minutes.",
+              "Add trimmed green beans to the baking sheet.",
+              "Season chicken breast with garlic powder, salt, pepper, and olive oil.",
+              "Place chicken on the baking sheet and roast for 18-20 minutes until thoroughly cooked (165°F).",
+              "Plate the juicy baked chicken alongside roasted sweet potatoes and tender green beans!"
             ],
-            prepTime: "35 minutes"
+            prepTime: "30 minutes"
           }
         },
         snacks: {
-          description: "String cheese and pear",
+          description: "Whole raw almonds and crisp sliced green pear",
           protein: 18,
           vegetarian: true,
           recipe: {
             ingredients: [
-              "1 string cheese",
-              "1 ripe pear, sliced"
+              "1/4 cup whole raw unflavored almonds",
+              "1 crisp ripe green pear, cored and sliced",
+              "Pinch of cinnamon (optional)"
             ],
             instructions: [
-              "Simply peel and slice your pear into bite-sized pieces.",
-              "Unwrap your string cheese and you're ready to go!",
-              "The sweet pear and savory cheese make such a satisfying combination.",
-              "I keep this combo in my bag for post-yoga snacks. So easy and delicious!"
+              "Rinse and core your fresh green pear, slicing it into thin crisp wedges.",
+              "Portion out 1/4 cup of whole raw almonds for healthy heart fats and clean protein.",
+              "Dust pear slices with a pinch of ground cinnamon if you enjoy an aromatic kick.",
+              "Pair together for the perfect afternoon balance of fiber, natural crunch, and sustained energy."
             ],
             prepTime: "3 minutes"
           }
@@ -403,7 +490,7 @@ const App = () => {
           recipe: {
             ingredients: [
               "3 oz lean beef strips",
-              "1 cup mixed stir-fry vegetables",
+              "1 cup mixed stir-fry vegetables (broccoli florets, carrots, snap peas)",
               "1/2 cup cooked brown rice",
               "1 tablespoon low-sodium soy sauce",
               "1 teaspoon sesame oil",
@@ -415,8 +502,8 @@ const App = () => {
               "Add beef strips and stir-fry for 2-3 minutes until browned.",
               "Add garlic and ginger, cook for 30 seconds until fragrant.",
               "Toss in mixed vegetables and stir-fry for 3-4 minutes until crisp-tender.",
-              "Add soy sauce and stir to combine. Serve over brown rice.",
-              "Quick, flavorful, and perfect for busy evenings before my knitting circle!"
+              "Add low-sodium soy sauce and toss everything together.",
+              "Serve hot over steamed brown rice for an iron-rich senior vitality dinner."
             ],
             prepTime: "15 minutes"
           }
@@ -448,95 +535,91 @@ const App = () => {
       id: "friday",
       meals: {
         breakfast: {
-          description: "Cottage cheese pancakes with fresh fruit",
-          protein: 25,
+          description: "Warm rolled oatmeal with chia seeds and blueberries",
+          protein: 18,
           vegetarian: true,
           recipe: {
             ingredients: [
-              "1/2 cup cottage cheese",
-              "2 eggs",
-              "1/4 cup oat flour or regular flour",
-              "1/2 teaspoon baking powder",
-              "Fresh fruit for topping",
-              "Maple syrup (optional)"
+              "1/2 cup old-fashioned rolled oats",
+              "1 cup unsweetened almond milk or water",
+              "1 tablespoon black chia seeds",
+              "1/2 cup fresh wild blueberries",
+              "1/2 teaspoon ground cinnamon",
+              "1 teaspoon pure maple syrup (optional)"
             ],
             instructions: [
-              "In a blender, combine cottage cheese, eggs, flour, and baking powder.",
-              "Blend until smooth - the cottage cheese disappears completely!",
-              "Heat a non-stick pan over medium heat and lightly grease with oil or butter.",
-              "Pour 1/4 cup portions of batter and cook for 2-3 minutes per side.",
-              "Serve with fresh fruit and a light drizzle of maple syrup if desired.",
-              "These are so fluffy and satisfying - perfect for a leisurely Friday morning with my coffee!"
+              "Bring almond milk to a gentle simmer in a small saucepan over medium heat.",
+              "Stir in rolled oats and reduce heat to low, simmering for 5-7 minutes until creamy.",
+              "Fold in chia seeds and ground cinnamon during the last minute of cooking.",
+              "Transfer oatmeal to a warm bowl and top generously with fresh wild blueberries.",
+              "Drizzle with a touch of maple syrup if desired. Heart-healthy and full of polyphenols!"
             ],
-            prepTime: "15 minutes"
+            prepTime: "8 minutes"
           }
         },
         lunch: {
-          description: "Tuna salad (3 oz) on whole grain bread with side salad",
+          description: "Tuna salad (3 oz) on whole grain crackers with side salad",
           protein: 28,
           vegetarian: false,
           recipe: {
             ingredients: [
-              "3 oz canned tuna in water, drained",
-              "1 tablespoon Greek yogurt or light mayo",
+              "3 oz light chunk tuna in water, thoroughly drained",
+              "1 tablespoon plain Greek yogurt (or olive oil mayonnaise)",
               "1 teaspoon Dijon mustard",
-              "Celery and red onion, finely chopped",
-              "2 slices whole grain bread",
-              "Mixed greens with vinaigrette"
+              "2 tablespoons finely diced celery and red onion",
+              "6-8 whole grain crackers (or 2 slices toasted whole grain bread)",
+              "1 cup fresh baby arugula with a light lemon vinaigrette"
             ],
             instructions: [
-              "In a bowl, mix tuna with Greek yogurt, mustard, celery, and onion.",
-              "Season with salt and pepper to taste.",
-              "Toast your bread slices if you like them crispy.",
-              "Spread the tuna mixture on one slice and top with the other.",
-              "Serve with a fresh side salad dressed with your favorite vinaigrette.",
-              "My go-to lunch that keeps me energized for afternoon activities!"
+              "In a bowl, flake the drained tuna and mix with Greek yogurt, Dijon mustard, celery, and red onion.",
+              "Season with freshly cracked black pepper and a squeeze of fresh lemon juice.",
+              "Spoon tuna salad onto crisp whole grain crackers or toast slices.",
+              "Toss fresh baby arugula with olive oil and lemon juice, then plate alongside."
             ],
             prepTime: "10 minutes"
           }
         },
         dinner: {
-          description: "Vegetable and chickpea curry with basmati rice",
-          protein: 24,
-          vegetarian: true,
+          description: "Oven-baked salmon fillet with roasted asparagus and wild brown rice",
+          protein: 34,
+          vegetarian: false,
           recipe: {
             ingredients: [
-              "1/2 cup cooked chickpeas",
-              "1 cup mixed vegetables (cauliflower, peas, carrots)",
-              "1/2 cup coconut milk",
-              "1 tablespoon curry powder",
-              "1/2 onion, chopped",
-              "1 clove garlic, minced",
-              "1/2 cup cooked basmati rice"
+              "4 oz wild salmon fillet",
+              "1 bundle fresh asparagus spears (woody ends trimmed)",
+              "1/2 cup cooked wild brown rice blend",
+              "1 tablespoon extra virgin olive oil",
+              "1/2 fresh lemon (juiced and sliced)",
+              "Sea salt, garlic powder, and fresh cracked black pepper"
             ],
             instructions: [
-              "Sauté onion and garlic in a pot until softened.",
-              "Add curry powder and cook for 1 minute until fragrant.",
-              "Add vegetables and cook for 5 minutes, stirring occasionally.",
-              "Pour in coconut milk and add chickpeas. Simmer for 10-15 minutes.",
-              "Season with salt and serve over fluffy basmati rice.",
-              "So comforting and perfect for a relaxing Friday evening with a good book!"
+              "Preheat oven to 400°F (200°C) and line a sheet pan with parchment paper.",
+              "Arrange trimmed asparagus spears on one side, drizzle with olive oil, salt, and pepper.",
+              "Place salmon fillet skin-side down on the sheet pan, brush with olive oil, and top with lemon slices.",
+              "Roast in the oven for 12-14 minutes until salmon flakes tenderly with a fork.",
+              "Serve hot with steamed wild brown rice for an omega-3 powerhouse dinner."
             ],
-            prepTime: "25 minutes"
+            prepTime: "20 minutes"
           }
         },
         snacks: {
-          description: "Hard-boiled egg and carrot sticks",
+          description: "Hard-boiled egg and carrot sticks with hummus",
           protein: 23,
           vegetarian: true,
           recipe: {
             ingredients: [
-              "1 hard-boiled egg",
-              "1/2 cup carrot sticks"
+              "1 large pasture-raised egg (hard-boiled)",
+              "1 cup fresh crunchy carrot sticks",
+              "2 tablespoons classic garlic hummus",
+              "Pinch of sea salt and smoked paprika"
             ],
             instructions: [
-              "Prepare your hard-boiled egg ahead of time (see Monday's snack instructions).",
-              "Peel and slice the egg in half.",
-              "Cut carrots into sticks - I like them thick enough to be satisfying!",
-              "Pack together for a protein-packed, crunchy snack.",
-              "This combo keeps me going through my evening knitting projects!"
+              "Peel the chilled hard-boiled egg and slice neatly in half.",
+              "Lightly dust the yolk with a pinch of sea salt and smoked paprika.",
+              "Wash and cut crisp carrots into sturdy dipping batons.",
+              "Serve with 2 tablespoons of hummus for an energizing midday protein snack."
             ],
-            prepTime: "5 minutes (plus egg prep time)"
+            prepTime: "5 minutes"
           }
         }
       }
@@ -569,27 +652,26 @@ const App = () => {
           }
         },
         lunch: {
-          description: "Grilled shrimp (4 oz) with couscous and roasted vegetables",
+          description: "Grilled chicken Caesar salad with crisp romaine and parmesan",
           protein: 30,
           vegetarian: false,
           recipe: {
             ingredients: [
-              "4 oz shrimp, peeled and deveined",
-              "1/2 cup cooked couscous",
-              "1 cup mixed roasted vegetables",
-              "1 tablespoon olive oil",
-              "Lemon juice, garlic, salt, and pepper",
-              "Fresh parsley for garnish"
+              "4 oz grilled chicken breast, sliced",
+              "2 cups chopped crisp romaine lettuce hearts",
+              "2 tablespoons shaved parmesan cheese",
+              "2 tablespoons whole grain croutons",
+              "1.5 tablespoons light yogurt-based Caesar dressing",
+              "Freshly cracked black pepper and lemon wedge"
             ],
             instructions: [
-              "Marinate shrimp in olive oil, lemon juice, garlic, salt, and pepper for 10 minutes.",
-              "Grill or sauté shrimp for 2-3 minutes per side until pink and opaque.",
-              "Fluff couscous with a fork and mix with a little olive oil and lemon juice.",
-              "Toss roasted vegetables with fresh parsley.",
-              "Plate everything together and squeeze extra lemon on top.",
-              "So fresh and light - perfect for a Saturday lunch after my morning walk!"
+              "Wash and dry crisp romaine hearts thoroughly, then chop into bite-sized pieces.",
+              "Toss romaine in a large bowl with light Caesar dressing until lightly coated.",
+              "Top with sliced grilled chicken breast.",
+              "Garnish with shaved parmesan, crunchy croutons, and cracked black pepper.",
+              "Serve with a fresh lemon wedge for a vibrant, senior-friendly protein lunch!"
             ],
-            prepTime: "20 minutes"
+            prepTime: "15 minutes"
           }
         },
         dinner: {
@@ -752,17 +834,146 @@ const App = () => {
 
   const navLinks = [
     { name: 'Home', href: '#home', icon: Coffee },
+    { name: 'Recipes', href: '#recipes', icon: ChefHat },
     { name: '7-Day Plan', href: '#meal-plan', icon: Calendar },
-    { name: 'Nutrition', href: '#nutrition', icon: Activity },
+    { name: 'Shopping List', href: '#shopping-list', icon: ShoppingCart },
     { name: 'Kitchen Tips', href: '#tips', icon: Book },
   ];
 
+  // Helper to check if a meal matches query & category
+  const checkMealMatch = (meal, mealType, query, category) => {
+    let categoryMatch = true;
+    if (category === 'vegetarian') categoryMatch = meal.vegetarian;
+    else if (category === 'quick') {
+      const minutes = parseInt(meal.recipe.prepTime) || 0;
+      categoryMatch = minutes <= 20;
+    } else if (category === 'high-protein') {
+      categoryMatch = meal.protein >= 25;
+    }
+
+    if (!categoryMatch) return { isMatch: false, matchedIngredient: null };
+
+    if (!query || query.trim() === '') {
+      return { isMatch: true, matchedIngredient: null };
+    }
+
+    const q = query.trim().toLowerCase();
+
+    // Check description
+    if (meal.description.toLowerCase().includes(q)) {
+      return { isMatch: true, matchedIngredient: null };
+    }
+
+    // Check meal type
+    if (mealType.toLowerCase().includes(q)) {
+      return { isMatch: true, matchedIngredient: null };
+    }
+
+    // Check ingredients
+    const matchedIng = meal.recipe.ingredients.find(ing => ing.toLowerCase().includes(q));
+    if (matchedIng) {
+      return { isMatch: true, matchedIngredient: matchedIng };
+    }
+
+    // Check instructions
+    if (meal.recipe.instructions.some(inst => inst.toLowerCase().includes(q))) {
+      return { isMatch: true, matchedIngredient: null };
+    }
+
+    // Check prep time
+    if (meal.recipe.prepTime.toLowerCase().includes(q)) {
+      return { isMatch: true, matchedIngredient: null };
+    }
+
+    return { isMatch: false, matchedIngredient: null };
+  };
+
+  // Compute total matches and per-day meal match results
+  const searchResults = useMemo(() => {
+    let totalMatches = 0;
+    const daysData = mealPlan.map(dayPlan => {
+      const mealMatches = {};
+      let dayMatchCount = 0;
+
+      Object.entries(dayPlan.meals).forEach(([mealType, meal]) => {
+        const result = checkMealMatch(meal, mealType, searchQuery, activeCategory);
+        mealMatches[mealType] = result;
+        if (result.isMatch) {
+          totalMatches++;
+          dayMatchCount++;
+        }
+      });
+
+      return {
+        ...dayPlan,
+        mealMatches,
+        dayMatchCount,
+        hasMatches: dayMatchCount > 0
+      };
+    });
+
+    return {
+      totalMatches,
+      daysData,
+      isFiltered: searchQuery.trim() !== '' || activeCategory !== 'all'
+    };
+  }, [mealPlan, searchQuery, activeCategory]);
+
+  // Compute all recipes flat list for RecipeList component (filtered if search/category active)
+  const filteredRecipeList = useMemo(() => {
+    const list = [];
+    mealPlan.forEach(dayPlan => {
+      Object.entries(dayPlan.meals).forEach(([mealType, meal]) => {
+        const matchResult = checkMealMatch(meal, mealType, searchQuery, activeCategory);
+        if (matchResult.isMatch) {
+          const meta = getMealMeta(dayPlan.id, mealType);
+          list.push({
+            dayId: dayPlan.id,
+            dayName: dayPlan.day,
+            mealType,
+            description: meal.description,
+            protein: meal.protein,
+            vegetarian: meal.vegetarian,
+            recipe: meal.recipe,
+            calories: meta.calories,
+            image: meta.image,
+            imageAlt: meta.imageAlt
+          });
+        }
+      });
+    });
+    return list;
+  }, [mealPlan, searchQuery, activeCategory]);
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setActiveCategory('all');
+  };
+
+  // Toggle expanding all matching recipes
+  const expandAllMatches = () => {
+    const newExpanded = { ...expandedRecipes };
+    searchResults.daysData.forEach(day => {
+      Object.entries(day.mealMatches).forEach(([mealType, match]) => {
+        if (match.isMatch) {
+          newExpanded[`${day.id}-${mealType}`] = true;
+        }
+      });
+    });
+    setExpandedRecipes(newExpanded);
+  };
+
+  const collapseAllRecipes = () => {
+    setExpandedRecipes({});
+  };
+
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
+    <div className={`min-h-screen transition-colors duration-300 selection:bg-amber-500 selection:text-white ${
       theme === 'light' 
-        ? 'bg-gradient-to-br from-amber-50 to-orange-50 text-gray-900' 
-        : 'bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100'
+        ? 'bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-stone-100 text-stone-900' 
+        : 'bg-gradient-to-br from-slate-950 via-slate-900 to-stone-900 text-slate-100'
     } ${fontSizeClasses[fontSize]}`}>
+      
       {/* Responsive Navigation Header Component */}
       <Header
         title="Jean's Vitality Kitchen"
@@ -770,21 +981,22 @@ const App = () => {
         links={navLinks}
         theme={theme}
         onToggleTheme={toggleTheme}
+        onNavigate={handleNavigate}
         fontSizeControls={
-          <div className="flex items-center space-x-1 p-1.5 rounded-xl backdrop-blur-sm bg-amber-50/80 dark:bg-gray-800/80 border border-amber-200/40 dark:border-gray-700/60">
+          <div className="flex items-center space-x-1 p-1 rounded-xl backdrop-blur-md bg-amber-100/70 dark:bg-slate-800/80 border border-amber-300/60 dark:border-slate-700">
             <button
               onClick={decreaseFontSize}
-              className="p-1 rounded-lg transition-all duration-200 hover:bg-white/60 dark:hover:bg-gray-700/60 text-gray-700 dark:text-gray-300"
+              className="p-1 rounded-lg transition-all duration-150 hover:bg-white/80 dark:hover:bg-slate-700 text-stone-900 dark:text-slate-100 active:scale-95"
               aria-label="Decrease font size"
             >
               <Minus className="h-4 w-4" />
             </button>
-            <span className="text-xs font-semibold px-2 text-gray-700 dark:text-gray-300">
+            <span className="text-xs font-bold px-1.5 text-stone-900 dark:text-slate-100">
               A
             </span>
             <button
               onClick={increaseFontSize}
-              className="p-1 rounded-lg transition-all duration-200 hover:bg-white/60 dark:hover:bg-gray-700/60 text-gray-700 dark:text-gray-300"
+              className="p-1 rounded-lg transition-all duration-150 hover:bg-white/80 dark:hover:bg-slate-700 text-stone-900 dark:text-slate-100 active:scale-95"
               aria-label="Increase font size"
             >
               <Plus className="h-4 w-4" />
@@ -793,247 +1005,661 @@ const App = () => {
         }
       />
 
-      {/* Hero / Banner Header */}
-      <header id="home" className={`shadow-sm border-b backdrop-blur-md bg-white/70 dark:bg-gray-800/70 border-white/20 dark:border-gray-700/30`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className={`p-3 rounded-xl backdrop-blur-sm bg-amber-100/70 dark:bg-amber-900/50 border border-amber-200/50 dark:border-amber-800/30`}>
-              <ChefHat className={`h-8 w-8 ${theme === 'light' ? 'text-amber-600' : 'text-amber-400'}`} />
+      {/* Hero Component with Warm Inviting Welcome & 7-Day Plan CTA */}
+      <Hero
+        theme={theme}
+        nutritionInfo={nutritionInfo}
+        mealPlan={mealPlan}
+        onScrollToDay={scrollToDay}
+        onViewPlan={() => scrollToDay('meal-plan')}
+        onViewShoppingList={() => handleNavigate('#shopping-list')}
+      />
+
+      {/* Main Content Area */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-10">
+        
+        {/* Guidelines Section: Jean's Kitchen Wisdom */}
+        <section 
+          id="tips" 
+          aria-labelledby="kitchen-wisdom-heading"
+          className={`rounded-3xl p-6 sm:p-8 scroll-mt-24 backdrop-blur-2xl transition-all duration-300 shadow-lg ${
+            theme === 'light'
+              ? 'bg-white/95 border border-emerald-200/90 shadow-[0_8px_30px_rgba(16,185,129,0.08)] ring-1 ring-emerald-900/5'
+              : 'bg-slate-900/85 border border-emerald-800/40 shadow-xl ring-1 ring-white/10'
+          }`}
+        >
+          <div className="flex items-center space-x-3 mb-6 pb-4 border-b border-emerald-100 dark:border-slate-800">
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+              <Leaf className="h-7 w-7" aria-hidden="true" />
             </div>
             <div>
-              <h1 className={`text-3xl font-bold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
-                Jean's 7-Day High-Protein Meal Plan
-              </h1>
-              <p className={`text-lg ${theme === 'light' ? 'text-gray-600' : 'text-gray-300'}`}>
-                Nourishing recipes for active seniors - each with 100g protein daily!
+              <h2 id="kitchen-wisdom-heading" className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
+                theme === 'light' ? 'text-stone-900' : 'text-white'
+              }`}>
+                Jean's Kitchen Wisdom for Active Seniors
+              </h2>
+              <p className={`text-sm font-medium ${
+                theme === 'light' ? 'text-stone-600' : 'text-slate-300'
+              }`}>
+                Simple, science-backed habits for lasting strength, mobility, and vitality
               </p>
             </div>
           </div>
-          
-          <div id="nutrition" className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            <div className={`p-4 rounded-xl backdrop-blur-sm bg-amber-50/70 dark:bg-amber-900/30 border border-amber-100/50 dark:border-amber-800/30`}>
-              <div className="flex items-center space-x-2 mb-2">
-                <Heart className={`h-5 w-5 ${theme === 'light' ? 'text-red-500' : 'text-red-400'}`} />
-                <span className={`font-semibold ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
-                  Target Protein
-                </span>
-              </div>
-              <p className={`text-2xl font-bold ${theme === 'light' ? 'text-amber-600' : 'text-amber-400'}`}>
-                {nutritionInfo.dailyProtein}
-              </p>
-            </div>
-            
-            <div className={`p-4 rounded-xl backdrop-blur-sm bg-green-50/70 dark:bg-green-900/30 border border-green-100/50 dark:border-green-800/30`}>
-              <div className="flex items-center space-x-2 mb-2">
-                <Activity className={`h-5 w-5 ${theme === 'light' ? 'text-green-500' : 'text-green-400'}`} />
-                <span className={`font-semibold ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
-                  Daily Calories
-                </span>
-              </div>
-              <p className={`text-2xl font-bold ${theme === 'light' ? 'text-green-600' : 'text-green-400'}`}>
-                {nutritionInfo.calories}
-              </p>
-            </div>
-            
-            <div className={`p-4 rounded-xl backdrop-blur-sm bg-purple-50/70 dark:bg-purple-900/30 border border-purple-100/50 dark:border-purple-800/30`}>
-              <div className="flex items-center space-x-2 mb-2">
-                <Utensils className={`h-5 w-5 ${theme === 'light' ? 'text-purple-500' : 'text-purple-400'}`} />
-                <span className={`font-semibold ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
-                  Focus Areas
-                </span>
-              </div>
-              <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-gray-300'}`}>
-                {nutritionInfo.focus}
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Guidelines Section */}
-        <div id="tips" className={`rounded-2xl shadow-lg p-6 mb-8 scroll-mt-24 backdrop-blur-sm bg-white/70 dark:bg-gray-800/70 border border-white/30 dark:border-gray-700/30`}>
-          <h2 className={`text-2xl font-bold mb-4 flex items-center ${
-            theme === 'light' ? 'text-gray-900' : 'text-white'
-          }`}>
-            <Leaf className={`h-6 w-6 mr-2 ${theme === 'light' ? 'text-green-500' : 'text-green-400'}`} />
-            Jean's Kitchen Wisdom for Active Seniors
-          </h2>
-          <ul className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {guidelines.map((guideline, index) => (
-              <li key={index} className="flex items-start space-x-2">
-                <span className={`mt-1 ${theme === 'light' ? 'text-green-500' : 'text-green-400'}`}>•</span>
-                <span className={theme === 'light' ? 'text-gray-700' : 'text-gray-300'}>{guideline}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Meal Plan */}
-        <div id="meal-plan" className="space-y-6 scroll-mt-24">
-          {mealPlan.map((dayPlan, index) => (
-            <div key={index} id={dayPlan.id} className={`rounded-2xl shadow-lg overflow-hidden scroll-mt-24 backdrop-blur-sm bg-white/70 dark:bg-gray-800/70 border border-white/30 dark:border-gray-700/30`}>
-              <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-4">
-                <h3 className="text-2xl font-bold text-white">{dayPlan.day}</h3>
-              </div>
-              
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {Object.entries(dayPlan.meals).map(([mealType, meal]) => {
-                    const key = `${dayPlan.id}-${mealType}`;
-                    const isExpanded = expandedRecipes[key];
-                    
-                    return (
-                      <div key={mealType} className={`rounded-xl p-4 transition-shadow duration-200 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl ${
-                        theme === 'light' 
-                          ? 'bg-white/60 hover:bg-white/80' 
-                          : 'bg-gray-800/60 hover:bg-gray-800/80'
-                      }`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className={`font-semibold capitalize ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
-                            {mealType}
-                          </h4>
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full backdrop-blur-sm ${
-                            theme === 'light' 
-                              ? 'bg-amber-100/80 text-amber-800' 
-                              : 'bg-amber-900/60 text-amber-200'
-                          }`}>
-                            {meal.protein}g protein
-                          </span>
-                        </div>
-                        <p className={`text-sm mb-3 ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
-                          {meal.description}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            {meal.vegetarian ? (
-                              <span className={`inline-flex items-center text-xs ${
-                                theme === 'light' ? 'text-green-600' : 'text-green-400'
-                              }`}>
-                                <Leaf className="h-3 w-3 mr-1" />
-                                Vegetarian
-                              </span>
-                            ) : (
-                              <span className={`inline-flex items-center text-xs ${
-                                theme === 'light' ? 'text-gray-600' : 'text-gray-400'
-                              }`}>
-                                <Utensils className="h-3 w-3 mr-1" />
-                                Non-vegetarian
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => toggleRecipe(dayPlan.id, mealType)}
-                            className={`text-xs font-medium flex items-center transition-colors duration-200 ${
-                              theme === 'light' 
-                                ? 'text-amber-600 hover:text-amber-700' 
-                                : 'text-amber-400 hover:text-amber-300'
-                            }`}
-                          >
-                            <ChefHat className="h-3 w-3 mr-1" />
-                            {isExpanded ? 'Hide Recipe' : 'View Recipe'}
-                          </button>
-                        </div>
-                        
-                        {isExpanded && (
-                          <div className={`mt-4 pt-4 border-t transition-all duration-300 ${
-                            theme === 'light' ? 'border-gray-200/50' : 'border-gray-700/50'
-                          }`}>
-                            <div className={`flex items-center text-sm mb-2 ${
-                              theme === 'light' ? 'text-amber-600' : 'text-amber-400'
-                            }`}>
-                              <Clock className="h-4 w-4 mr-1" />
-                              Prep Time: {meal.recipe.prepTime}
-                            </div>
-                            
-                            <div className="mb-3">
-                              <h5 className={`font-semibold mb-2 ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
-                                Ingredients:
-                              </h5>
-                              <ul className={`space-y-1 ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
-                                {meal.recipe.ingredients.map((ingredient, idx) => (
-                                  <li key={idx} className="flex items-start">
-                                    <span className={`mr-2 ${theme === 'light' ? 'text-amber-500' : 'text-amber-400'}`}>•</span>
-                                    {ingredient}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            
-                            <div>
-                              <h5 className={`font-semibold mb-2 ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
-                                Let's Cook!
-                              </h5>
-                              <ol className={`space-y-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
-                                {meal.recipe.instructions.map((instruction, idx) => (
-                                  <li key={idx} className="flex">
-                                    <span className={`font-medium mr-2 ${theme === 'light' ? 'text-amber-500' : 'text-amber-400'}`}>
-                                      {idx + 1}.
-                                    </span>
-                                    {instruction}
-                                  </li>
-                                ))}
-                              </ol>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+              <div 
+                key={index} 
+                className={`flex items-start space-x-3 p-4 rounded-2xl border transition-all ${
+                  theme === 'light'
+                    ? 'bg-emerald-50/60 border-emerald-100/90 text-stone-800 hover:bg-emerald-50'
+                    : 'bg-slate-800/60 border-slate-700/60 text-slate-200 hover:bg-slate-800'
+                }`}
+              >
+                <div className="mt-0.5 shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                
-                <div className={`mt-4 pt-4 border-t ${
-                  theme === 'light' ? 'border-gray-200/50' : 'border-gray-700/50'
+                <span className="text-sm sm:text-base font-medium leading-relaxed">
+                  {guideline}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Daily Water Intake Tracker Section */}
+        <WaterTracker theme={theme} />
+
+        {/* Recipe Search & Filter Section */}
+        <section id="search-section" aria-label="Recipe Search">
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onClearSearch={handleClearSearch}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            totalMatches={searchResults.totalMatches}
+            totalRecipes={28}
+            theme={theme}
+          />
+        </section>
+
+        {/* Recipe Presentation Mode & Main Content */}
+        <section id="recipes" aria-label="Recipes and Meal Planning" className="space-y-6 scroll-mt-24">
+          
+          {/* View Toggle Bar */}
+          <div className={`p-4 sm:p-5 rounded-3xl backdrop-blur-2xl border transition-all flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md ${
+            theme === 'light'
+              ? 'bg-white/95 border-amber-200/90 shadow-[0_8px_30px_rgba(217,119,6,0.06)]'
+              : 'bg-slate-900/90 border-slate-700/70 shadow-xl'
+          }`}>
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 rounded-2xl bg-amber-500 text-white shadow-md shadow-amber-500/20">
+                <ChefHat className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className={`text-base sm:text-lg font-black tracking-tight ${
+                  theme === 'light' ? 'text-stone-900' : 'text-white'
                 }`}>
-                  <div className="flex justify-between items-center">
-                    <span className={`font-semibold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
-                      Daily Total:
-                    </span>
-                    <span className={`font-bold px-3 py-1 rounded-full backdrop-blur-sm ${
-                      theme === 'light' ? 'bg-green-100/80 text-green-800' : 'bg-green-900/60 text-green-200'
-                    }`}>
-                      {Object.values(dayPlan.meals).reduce((sum, meal) => sum + meal.protein, 0)}g protein
-                    </span>
+                  Display Layout
+                </h3>
+                <p className={`text-xs ${theme === 'light' ? 'text-stone-600' : 'text-slate-400'}`}>
+                  Choose how you'd like to browse Jean's high-protein recipes
+                </p>
+              </div>
+            </div>
+
+            {/* Segmented View Switcher */}
+            <div className={`flex items-center p-1.5 rounded-2xl border ${
+              theme === 'light'
+                ? 'bg-stone-100/90 border-stone-200'
+                : 'bg-slate-800/90 border-slate-700'
+            }`}>
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+                  viewMode === 'cards'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : theme === 'light'
+                      ? 'text-stone-700 hover:text-stone-950'
+                      : 'text-slate-300 hover:text-white'
+                }`}
+                aria-pressed={viewMode === 'cards'}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span>Recipe Cards</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setViewMode('daily')}
+                className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+                  viewMode === 'daily'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : theme === 'light'
+                      ? 'text-stone-700 hover:text-stone-950'
+                      : 'text-slate-300 hover:text-white'
+                }`}
+                aria-pressed={viewMode === 'daily'}
+              >
+                <Calendar className="w-4 h-4" />
+                <span>7-Day Schedule</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setViewMode('shopping')}
+                className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+                  viewMode === 'shopping'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : theme === 'light'
+                      ? 'text-stone-700 hover:text-stone-950'
+                      : 'text-slate-300 hover:text-white'
+                }`}
+                aria-pressed={viewMode === 'shopping'}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>Grocery List</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Render Active View */}
+          {viewMode === 'shopping' ? (
+            <ShoppingList mealPlan={mealPlan} theme={theme} />
+          ) : viewMode === 'cards' ? (
+            /* RecipeList Component View */
+            <div id="recipe-list-section">
+              {filteredRecipeList.length === 0 ? (
+                <div 
+                  className={`rounded-3xl p-8 sm:p-12 text-center backdrop-blur-2xl border shadow-lg ${
+                    theme === 'light'
+                      ? 'bg-white/95 border-amber-200 shadow-[0_10px_35px_rgba(217,119,6,0.08)]'
+                      : 'bg-slate-900/90 border-slate-700 shadow-2xl'
+                  }`}
+                >
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-100 dark:bg-amber-950/80 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                    <Search className="w-8 h-8" />
+                  </div>
+                  <h3 className={`text-xl sm:text-2xl font-extrabold mb-2 ${
+                    theme === 'light' ? 'text-stone-900' : 'text-white'
+                  }`}>
+                    No Recipes Match Your Filter
+                  </h3>
+                  <p className={`text-sm sm:text-base max-w-md mx-auto mb-6 ${
+                    theme === 'light' ? 'text-stone-600' : 'text-slate-300'
+                  }`}>
+                    No recipe cards found for <strong className="text-amber-600 dark:text-amber-400">"{searchQuery}"</strong>.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="px-6 py-2.5 rounded-2xl text-sm font-bold bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-md shadow-amber-600/25 active:scale-95 transition-all"
+                  >
+                    Reset & View All Recipes
+                  </button>
+                </div>
+              ) : (
+                <RecipeList
+                  recipes={filteredRecipeList}
+                  theme={theme}
+                  onToggleRecipe={toggleRecipe}
+                  expandedRecipes={expandedRecipes}
+                  searchQuery={searchQuery}
+                />
+              )}
+            </div>
+          ) : (
+            /* 7-Day Meal Plan Section */
+            <div id="meal-plan" aria-labelledby="meal-plan-heading" className="space-y-6 scroll-mt-24">
+              {/* Section Header with Quick Actions */}
+              <div className={`p-6 rounded-3xl backdrop-blur-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-md ${
+                theme === 'light'
+                  ? 'bg-white/92 border-amber-200/80 shadow-[0_8px_30px_rgba(217,119,6,0.06)]'
+                  : 'bg-slate-900/85 border-slate-700/60 shadow-xl'
+              }`}>
+                <div>
+                  <div className="inline-flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-1">
+                    <Utensils className="w-4 h-4" />
+                    <span>Complete Weekly Menu</span>
+                  </div>
+                  <h2 id="meal-plan-heading" className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
+                    theme === 'light' ? 'text-stone-900' : 'text-white'
+                  }`}>
+                    7-Day High-Protein Meal Plan
+                  </h2>
+                  <p className={`text-sm ${theme === 'light' ? 'text-stone-600' : 'text-slate-300'}`}>
+                    {searchResults.isFiltered ? (
+                      <span>
+                        Showing <strong className="text-amber-600 dark:text-amber-400">{searchResults.totalMatches}</strong> matching {searchResults.totalMatches === 1 ? 'recipe' : 'recipes'} across the week
+                      </span>
+                    ) : (
+                      '100g total protein everyday • Click any meal to view recipes & cooking steps'
+                    )}
+                  </p>
+                </div>
+
+                {/* Quick Bulk Expand/Collapse Actions */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {searchResults.isFiltered && (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                        theme === 'light'
+                          ? 'bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                      }`}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reset Filters</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={expandAllMatches}
+                    className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 border ${
+                      theme === 'light'
+                        ? 'bg-amber-100 hover:bg-amber-200 text-amber-950 border-amber-300'
+                        : 'bg-amber-950/80 hover:bg-amber-900 text-amber-200 border-amber-800'
+                    }`}
+                  >
+                    <ChefHat className="w-3.5 h-3.5" />
+                    <span>{searchResults.isFiltered ? 'Expand Matched' : 'Expand All'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={collapseAllRecipes}
+                    className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-all active:scale-95 ${
+                      theme === 'light'
+                        ? 'bg-stone-100/90 hover:bg-stone-200 text-stone-700'
+                        : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300'
+                    }`}
+                  >
+                    <span>Collapse All</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Day Jump Pills Toolbar for Daily Schedule */}
+              <div className={`p-3 rounded-2xl border backdrop-blur-xl flex items-center justify-between gap-2 overflow-x-auto scrollbar-none ${
+                theme === 'light' 
+                  ? 'bg-amber-50/90 border-amber-200/70 shadow-2xs' 
+                  : 'bg-slate-800/80 border-slate-700 shadow-md'
+              }`}>
+                <div className="flex items-center space-x-2 shrink-0 pl-1">
+                  <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <span className={`text-xs font-bold uppercase tracking-wider ${
+                    theme === 'light' ? 'text-stone-800' : 'text-slate-200'
+                  }`}>
+                    Jump to Day:
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-1.5 overflow-x-auto scrollbar-none">
+                  {mealPlan.map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => scrollToDay(d.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 active:scale-95 border ${
+                        theme === 'light'
+                          ? 'bg-white hover:bg-amber-500 hover:text-white border-amber-200 text-stone-800 shadow-2xs hover:border-amber-500'
+                          : 'bg-slate-900/90 hover:bg-amber-500 hover:text-stone-950 border-slate-700 text-slate-200 hover:border-amber-500'
+                      }`}
+                    >
+                      {d.day}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Empty Search Results State */}
+              {searchResults.totalMatches === 0 && (
+                <div 
+                  className={`rounded-3xl p-8 sm:p-12 text-center backdrop-blur-2xl border shadow-lg ${
+                    theme === 'light'
+                      ? 'bg-white/95 border-amber-200 shadow-[0_10px_35px_rgba(217,119,6,0.08)]'
+                      : 'bg-slate-900/90 border-slate-700 shadow-2xl'
+                  }`}
+                >
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-100 dark:bg-amber-950/80 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                    <Search className="w-8 h-8" />
+                  </div>
+
+                  <h3 className={`text-xl sm:text-2xl font-extrabold mb-2 ${
+                    theme === 'light' ? 'text-stone-900' : 'text-white'
+                  }`}>
+                    No Recipes Found
+                  </h3>
+                  
+                  <p className={`text-sm sm:text-base max-w-md mx-auto mb-6 ${
+                    theme === 'light' ? 'text-stone-600' : 'text-slate-300'
+                  }`}>
+                    We couldn't find any recipes matching <strong className="text-amber-600 dark:text-amber-400">"{searchQuery}"</strong> with the current filter.
+                  </p>
+
+                  <div className="flex flex-wrap justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="px-6 py-2.5 rounded-2xl text-sm font-bold bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-md shadow-amber-600/25 active:scale-95 transition-all"
+                    >
+                      View All 28 Recipes
+                    </button>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              )}
 
-        {/* Footer Note */}
-        <div className={`mt-8 rounded-2xl p-6 mb-12 backdrop-blur-sm border ${
-          theme === 'light' 
-            ? 'bg-yellow-50/70 border-yellow-200/50' 
-            : 'bg-yellow-900/30 border-yellow-800/30'
-        }`}>
-          <h3 className={`text-lg font-semibold mb-2 ${
-            theme === 'light' ? 'text-yellow-800' : 'text-yellow-200'
+              {/* Daily Cards */}
+              {searchResults.daysData.map((dayPlan, index) => {
+                const isDayVisible = !searchResults.isFiltered || dayPlan.hasMatches;
+                if (!isDayVisible) return null;
+
+                return (
+                  <div 
+                    key={index} 
+                    id={dayPlan.id} 
+                    className={`rounded-3xl overflow-hidden scroll-mt-24 backdrop-blur-2xl transition-all duration-300 shadow-lg ${
+                      theme === 'light'
+                        ? 'bg-white/95 border border-amber-200/90 shadow-[0_10px_35px_rgba(217,119,6,0.07)] ring-1 ring-amber-900/5'
+                        : 'bg-slate-900/90 border border-slate-700/70 shadow-2xl ring-1 ring-white/10'
+                    }`}
+                  >
+                    {/* Glossy Header Bar with Liquid Reflection */}
+                    <div className="relative bg-gradient-to-r from-amber-600 via-amber-500 to-orange-600 px-6 sm:px-8 py-4.5 text-white flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                      <div className="absolute inset-x-0 top-0 h-px bg-white/40" />
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md">
+                          <Calendar className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl sm:text-2xl font-black tracking-tight">{dayPlan.day}</h3>
+                          <span className="text-xs font-medium text-amber-100">
+                            {searchResults.isFiltered 
+                              ? `${dayPlan.dayMatchCount} of 4 meals match your search` 
+                              : 'Senior High-Protein Menu'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="inline-flex items-center space-x-2 bg-black/20 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20">
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-100">Daily Total:</span>
+                        <span className="text-sm font-black text-white">
+                          {Object.values(dayPlan.meals).reduce((sum, meal) => sum + meal.protein, 0)}g Protein
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-6 sm:p-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        {Object.entries(dayPlan.meals).map(([mealType, meal]) => {
+                          const key = `${dayPlan.id}-${mealType}`;
+                          const isExpanded = expandedRecipes[key];
+                          const matchResult = dayPlan.mealMatches[mealType] || { isMatch: true, matchedIngredient: null };
+                          const isMatch = matchResult.isMatch;
+                          const meta = getMealMeta(dayPlan.id, mealType);
+                          
+                          return (
+                            <div 
+                              key={mealType} 
+                              className={`rounded-2xl overflow-hidden transition-all duration-200 backdrop-blur-xl border flex flex-col justify-between ${
+                                searchResults.isFiltered && !isMatch 
+                                  ? 'opacity-35 grayscale-50 scale-[0.98]' 
+                                  : isMatch && searchResults.isFiltered
+                                    ? theme === 'light'
+                                      ? 'bg-amber-50/90 border-amber-400 ring-2 ring-amber-400/40 shadow-md'
+                                      : 'bg-slate-800/90 border-amber-400/60 ring-2 ring-amber-400/30 shadow-lg'
+                                    : theme === 'light' 
+                                      ? 'bg-amber-50/50 hover:bg-white border-amber-200/70 hover:border-amber-400 hover:shadow-md ring-1 ring-amber-900/5' 
+                                      : 'bg-slate-800/70 hover:bg-slate-800 border-slate-700 hover:border-amber-500/50 hover:shadow-xl'
+                              }`}
+                            >
+                              {/* Thumbnail preview */}
+                              <div className="relative aspect-16/10 w-full overflow-hidden bg-stone-200 dark:bg-slate-800">
+                                <img
+                                  src={meta.image}
+                                  alt={meta.imageAlt}
+                                  referrerPolicy="no-referrer"
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-white text-xs font-bold">
+                                  <span className="capitalize">{mealType}</span>
+                                  <span>{meta.calories} kcal</span>
+                                </div>
+                              </div>
+
+                              <div className="p-4">
+                                {/* Meal Type & Protein Badge */}
+                                <div className="flex justify-between items-start mb-2">
+                                  <h4 className={`font-black text-base capitalize tracking-tight ${
+                                    theme === 'light' ? 'text-stone-900' : 'text-white'
+                                  }`}>
+                                    {mealType}
+                                  </h4>
+                                  <span className={`text-xs font-black px-2.5 py-1 rounded-full shadow-2xs border ${
+                                    theme === 'light' 
+                                      ? 'bg-amber-100 text-amber-950 border-amber-300/80' 
+                                      : 'bg-amber-950/90 text-amber-200 border-amber-700/80'
+                                  }`}>
+                                    {meal.protein}g protein
+                                  </span>
+                                </div>
+
+                                {/* Meal Description */}
+                                <p className={`text-sm mb-3 leading-relaxed font-medium ${
+                                  theme === 'light' ? 'text-stone-700' : 'text-slate-200'
+                                }`}>
+                                  {meal.description}
+                                </p>
+
+                                {/* Matched Ingredient Indicator Tag */}
+                                {matchResult.matchedIngredient && (
+                                  <div className="mb-3">
+                                    <span className={`inline-flex items-center space-x-1 text-xs font-bold px-2 py-0.5 rounded-md border ${
+                                      theme === 'light'
+                                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                        : 'bg-amber-950 text-amber-200 border-amber-800'
+                                    }`}>
+                                      <Sparkles className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                                      <span>Contains: {matchResult.matchedIngredient.split(',')[0]}</span>
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="px-4 pb-4">
+                                {/* Tags & Recipe Toggle Button */}
+                                <div className="flex items-center justify-between pt-2 border-t border-amber-200/50 dark:border-slate-700/60">
+                                  <div className="flex items-center">
+                                    {meal.vegetarian ? (
+                                      <span className={`inline-flex items-center text-xs font-bold px-2 py-0.5 rounded-md ${
+                                        theme === 'light' 
+                                          ? 'bg-emerald-100 text-emerald-900' 
+                                          : 'bg-emerald-950 text-emerald-300'
+                                      }`}>
+                                        <Leaf className="h-3 w-3 mr-1" />
+                                        Veg
+                                      </span>
+                                    ) : (
+                                      <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md ${
+                                        theme === 'light' 
+                                          ? 'bg-stone-200/80 text-stone-800' 
+                                          : 'bg-slate-700/80 text-slate-300'
+                                      }`}>
+                                        <Utensils className="h-3 w-3 mr-1" />
+                                        Hearty
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleRecipe(dayPlan.id, mealType)}
+                                    className={`text-xs font-bold flex items-center px-2.5 py-1.5 rounded-lg transition-all active:scale-95 ${
+                                      theme === 'light' 
+                                        ? 'bg-amber-100/90 hover:bg-amber-200 text-amber-950 border border-amber-300/80' 
+                                        : 'bg-amber-950/80 hover:bg-amber-900 text-amber-200 border border-amber-700/60'
+                                    }`}
+                                    aria-expanded={isExpanded}
+                                  >
+                                    <ChefHat className="h-3.5 w-3.5 mr-1 text-amber-600 dark:text-amber-400" />
+                                    {isExpanded ? 'Hide' : 'View'}
+                                  </button>
+                                </div>
+                                
+                                {/* Expandable Recipe Details with High Contrast */}
+                                {isExpanded && (
+                                  <div className={`mt-4 pt-4 border-t transition-all duration-300 space-y-3.5 ${
+                                    theme === 'light' ? 'border-amber-200' : 'border-slate-700'
+                                  }`}>
+                                    <div className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-md ${
+                                      theme === 'light' 
+                                        ? 'bg-amber-100/90 text-amber-950 border border-amber-300/70' 
+                                        : 'bg-amber-950/80 text-amber-300 border border-amber-800/60'
+                                    }`}>
+                                      <Clock className="h-3.5 w-3.5 mr-1" />
+                                      Prep Time: {meal.recipe.prepTime}
+                                    </div>
+                                    
+                                    <div>
+                                      <h5 className={`font-bold text-xs uppercase tracking-wider mb-2 ${
+                                        theme === 'light' ? 'text-stone-900' : 'text-white'
+                                      }`}>
+                                        Ingredients:
+                                      </h5>
+                                      <ul className={`space-y-1.5 text-xs font-medium ${
+                                        theme === 'light' ? 'text-stone-800' : 'text-slate-200'
+                                      }`}>
+                                        {meal.recipe.ingredients.map((ingredient, idx) => {
+                                          const isIngredientMatch = searchQuery.trim() !== '' && 
+                                            ingredient.toLowerCase().includes(searchQuery.trim().toLowerCase());
+
+                                          return (
+                                            <li 
+                                              key={idx} 
+                                              className={`flex items-start p-1 rounded-md transition-colors ${
+                                                isIngredientMatch 
+                                                  ? theme === 'light'
+                                                    ? 'bg-amber-200/70 font-bold text-stone-900'
+                                                    : 'bg-amber-900/60 font-bold text-white'
+                                                  : ''
+                                              }`}
+                                            >
+                                              <span className="mr-1.5 text-amber-600 dark:text-amber-400 font-bold">•</span>
+                                              <span>{ingredient}</span>
+                                            </li>
+                                          );
+                                        })}
+                                      </ul>
+                                    </div>
+                                    
+                                    <div>
+                                      <h5 className={`font-bold text-xs uppercase tracking-wider mb-2 ${
+                                        theme === 'light' ? 'text-stone-900' : 'text-white'
+                                      }`}>
+                                        Jean's Cooking Steps:
+                                      </h5>
+                                      <ol className={`space-y-2 text-xs font-medium ${
+                                        theme === 'light' ? 'text-stone-800' : 'text-slate-200'
+                                      }`}>
+                                        {meal.recipe.instructions.map((instruction, idx) => (
+                                          <li key={idx} className="flex items-start">
+                                            <span className="font-black mr-2 text-amber-700 dark:text-amber-400 shrink-0">
+                                              {idx + 1}.
+                                            </span>
+                                            <span>{instruction}</span>
+                                          </li>
+                                        ))}
+                                      </ol>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Day Total Bar */}
+                      <div className={`mt-6 pt-5 border-t flex flex-col sm:flex-row justify-between items-center gap-3 ${
+                        theme === 'light' ? 'border-amber-200/70' : 'border-slate-800'
+                      }`}>
+                        <div className="flex items-center space-x-2">
+                          <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                          <span className={`text-sm font-bold ${theme === 'light' ? 'text-stone-900' : 'text-white'}`}>
+                            Daily Target Accomplished
+                          </span>
+                        </div>
+                        <span className={`font-black text-sm px-4 py-2 rounded-2xl backdrop-blur-md shadow-xs border ${
+                          theme === 'light' 
+                            ? 'bg-emerald-100 text-emerald-950 border-emerald-300' 
+                            : 'bg-emerald-950 text-emerald-200 border-emerald-800'
+                        }`}>
+                          {Object.values(dayPlan.meals).reduce((sum, meal) => sum + meal.protein, 0)}g Total High-Quality Protein
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Footer Note: Jean's Kitchen Heart */}
+        <section 
+          aria-label="Chef Note"
+          className={`rounded-3xl p-6 sm:p-8 backdrop-blur-2xl border transition-all shadow-lg ${
+            theme === 'light' 
+              ? 'bg-amber-50/95 border-amber-300/80 shadow-[0_8px_30px_rgba(217,119,6,0.08)] ring-1 ring-amber-900/5' 
+              : 'bg-slate-900/90 border-slate-700/80 shadow-xl ring-1 ring-white/10'
+          }`}
+        >
+          <div className="flex items-center space-x-3 mb-3">
+            <span className="text-3xl">👵</span>
+            <div>
+              <h3 className={`text-xl font-extrabold tracking-tight ${
+                theme === 'light' ? 'text-amber-950' : 'text-amber-200'
+              }`}>
+                Jean's Kitchen Note & Medical Reminder
+              </h3>
+              <span className={`text-xs font-semibold ${
+                theme === 'light' ? 'text-amber-800' : 'text-amber-400'
+              }`}>
+                Crafted with love for your lifelong wellness
+              </span>
+            </div>
+          </div>
+          <p className={`text-sm sm:text-base leading-relaxed font-normal ${
+            theme === 'light' ? 'text-stone-800' : 'text-slate-200'
           }`}>
-            Jean's Kitchen Note
-          </h3>
-          <p className={theme === 'light' ? 'text-yellow-700' : 'text-yellow-300'}>
-            These recipes are crafted with love and care, just like I would make for my own family! 
-            Remember, every body is different, so listen to yours and adjust as needed. 
-            Always consult with your healthcare provider before making significant dietary changes, 
-            especially if you have underlying health conditions. Happy cooking, dear friend!
+            These recipes are crafted with genuine love and care, just like I make for my own family! 
+            Every body is unique, so listen to how you feel and adjust seasonings or portion sizes as needed. 
+            Always consult with your healthcare professional before making significant dietary changes, 
+            especially if you have kidney considerations, diabetes, or other underlying conditions. 
+            Happy cooking and bon appétit, dear friend!
           </p>
-        </div>
+        </section>
       </main>
 
-      {/* Back to Top Button */}
+      {/* Back to Top Floating Glass Button */}
       {showBackToTop && (
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-6 right-6 p-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-110 focus:outline-none z-40 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 ${
+          type="button"
+          className={`fixed bottom-6 right-6 p-3.5 rounded-full shadow-2xl transition-all duration-200 transform hover:scale-110 focus:outline-hidden focus-visible:ring-4 focus-visible:ring-amber-500/50 z-40 backdrop-blur-xl border ${
             theme === 'light'
-              ? 'bg-amber-600/90 hover:bg-amber-600 text-white'
-              : 'bg-amber-700/90 hover:bg-amber-700 text-white'
+              ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white border-amber-300/80 shadow-amber-900/20'
+              : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white border-slate-600 shadow-black/50'
           }`}
-          aria-label="Back to top"
+          aria-label="Scroll back to top"
         >
-          <ChevronUp className="h-6 w-6" />
+          <ChevronUp className="h-6 w-6 stroke-[2.5]" />
         </button>
       )}
     </div>
@@ -1041,3 +1667,4 @@ const App = () => {
 };
 
 export default App;
+
