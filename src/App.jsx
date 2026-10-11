@@ -7,6 +7,7 @@ import RecipeList from './components/RecipeList';
 import ShoppingList from './components/ShoppingList';
 import WaterTracker from './components/WaterTracker';
 import WeeklyMealPlanDashboard from './components/WeeklyMealPlanDashboard';
+import MealPlanDashboard from './components/MealPlanDashboard';
 import SeniorRecipeModal from './components/SeniorRecipeModal';
 import { getMealMeta } from './data/recipeImages';
 import { scaleRecipeIngredients } from './utils/servings';
@@ -130,32 +131,34 @@ const App = () => {
     if (dayId === 'shopping-list') {
       setViewMode('shopping');
       setTimeout(() => {
-        const el = document.getElementById('shopping-list') || document.getElementById('recipes');
+        const el = document.getElementById('shopping-list');
         el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 60);
       return;
     }
 
-    if (dayId === 'meal-plan' || dayId === 'recipes') {
-      setViewMode('daily');
+    if (dayId === 'recipes') {
+      setViewMode('cards');
       setTimeout(() => {
-        const el = document.getElementById('recipes') || document.getElementById('meal-plan');
+        const el = document.getElementById('recipes');
         el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 60);
       return;
     }
 
-    // When jumping to a specific day:
-    // 1. Switch viewMode to 'daily' so the element is rendered in the DOM
-    setViewMode('daily');
+    if (dayId === 'meal-plan' || dayId === 'schedule') {
+      setViewMode('dashboard');
+      setTimeout(() => {
+        const el = document.getElementById('meal-plan-dashboard') || document.getElementById('recipes');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+      return;
+    }
 
-    // 2. Clear any search filter that might hide the day
-    setSearchQuery('');
-    setActiveCategory('all');
-
-    // 3. Smooth scroll to the day card and apply a subtle attention highlight ring
+    // When jumping to a specific day in the meal plan:
+    setViewMode('dashboard');
     setTimeout(() => {
-      const element = document.getElementById(dayId);
+      const element = document.getElementById(`day-card-${dayId}`) || document.getElementById(dayId);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         element.classList.add('ring-4', 'ring-amber-500/50');
@@ -174,7 +177,7 @@ const App = () => {
     } else if (href === '#shopping-list') {
       setViewMode('shopping');
       setTimeout(() => {
-        const el = document.getElementById('shopping-list') || document.getElementById('recipes');
+        const el = document.getElementById('shopping-list');
         el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 60);
     } else if (href === '#recipes') {
@@ -182,15 +185,11 @@ const App = () => {
       setTimeout(() => {
         document.getElementById('recipes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 60);
-    } else if (href === '#meal-plan') {
+    } else if (href === '#meal-plan' || href === '#schedule') {
       setViewMode('dashboard');
       setTimeout(() => {
-        document.getElementById('recipes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 60);
-    } else if (href === '#schedule') {
-      setViewMode('daily');
-      setTimeout(() => {
-        document.getElementById('recipes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const el = document.getElementById('meal-plan-dashboard') || document.getElementById('recipes');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 60);
     } else if (href === '#water-tracker') {
       setTimeout(() => {

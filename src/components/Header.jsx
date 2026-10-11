@@ -63,7 +63,7 @@ export const Header = ({
     <>
       <header
         id="main-sticky-header"
-        className={`sticky top-0 z-50 w-full transition-colors duration-200 border-b shadow-sm ${
+        className={`sticky top-0 z-50 w-full max-w-full overflow-x-clip transition-colors duration-200 border-b shadow-sm box-border ${
           highContrast
             ? 'bg-black text-white border-amber-400'
             : theme === 'light'
@@ -75,16 +75,16 @@ export const Header = ({
           backdropFilter: 'blur(16px)'
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 box-border">
+          <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4 w-full">
             
-            {/* Logo & Site Title - Guaranteed non-squishing with shrink-0 */}
-            <div className="flex items-center space-x-2.5 sm:space-x-3.5 shrink-0 min-w-0">
+            {/* Logo & Site Title - Flexibly responsive to never force overflow */}
+            <div className="flex items-center space-x-2 sm:space-x-3.5 min-w-0 flex-1">
               <a
                 id="header-brand-logo"
                 href="#home"
                 onClick={(e) => handleLinkClick('#home', e)}
-                className="group flex items-center space-x-2.5 sm:space-x-3 rounded-2xl transition-transform active:scale-95 shrink-0 focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                className="group flex items-center space-x-2 sm:space-x-3 rounded-2xl transition-transform active:scale-95 min-w-0 focus:outline-hidden focus:ring-2 focus:ring-amber-500"
                 aria-label="Jean's Vitality Kitchen Home"
               >
                 {/* Fallback solid background color prevents blank box on Safari 15 */}
@@ -95,14 +95,15 @@ export const Header = ({
                   <ChefHat className="w-6 h-6 text-white" aria-hidden="true" />
                 </div>
                 
-                <div className="flex flex-col text-left truncate">
-                  <span className={`text-base sm:text-xl font-black tracking-tight leading-tight truncate ${
+                <div className="flex flex-col text-left min-w-0 truncate">
+                  <span className={`text-sm sm:text-lg md:text-xl font-black tracking-tight leading-tight truncate ${
                     highContrast ? 'text-amber-300' : theme === 'light' ? 'text-stone-900' : 'text-white'
                   }`}>
-                    {title}
+                    <span className="hidden sm:inline">Jean's Vitality Kitchen</span>
+                    <span className="sm:hidden truncate">Jean's Kitchen</span>
                   </span>
                   {subtitle && (
-                    <span className="text-[11px] sm:text-xs font-bold text-amber-700 dark:text-amber-400 truncate hidden xs:inline-block">
+                    <span className="text-[10px] sm:text-xs font-bold text-amber-700 dark:text-amber-400 truncate hidden xs:inline-block">
                       {subtitle}
                     </span>
                   )}
@@ -110,8 +111,8 @@ export const Header = ({
               </a>
             </div>
 
-            {/* Right Action Bar: Notifications & Sticky Hamburger Menu */}
-            <div className="flex items-center space-x-2 shrink-0">
+            {/* Right Action Bar: Theme, Notifications & Sticky Hamburger Menu */}
+            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0 ml-auto pl-1">
               
               {/* Quick Theme Toggle Button in Top Navbar */}
               {onToggleTheme && (
@@ -119,7 +120,7 @@ export const Header = ({
                   type="button"
                   id="header-theme-toggle-btn"
                   onClick={onToggleTheme}
-                  className={`flex items-center space-x-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-black border transition-all active:scale-95 ${
+                  className={`flex items-center space-x-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-black border transition-all active:scale-95 min-h-[44px] ${
                     highContrast
                       ? 'bg-amber-400 text-black border-white'
                       : theme === 'light'
@@ -132,12 +133,12 @@ export const Header = ({
                   {theme === 'light' ? (
                     <>
                       <Moon className="w-4 h-4 text-amber-700 shrink-0" />
-                      <span className="hidden sm:inline font-bold">Dark</span>
+                      <span className="hidden md:inline font-bold">Dark</span>
                     </>
                   ) : (
                     <>
                       <Sun className="w-4 h-4 text-amber-300 shrink-0" />
-                      <span className="hidden sm:inline font-bold">Light</span>
+                      <span className="hidden md:inline font-bold">Light</span>
                     </>
                   )}
                 </button>
@@ -149,7 +150,7 @@ export const Header = ({
                   type="button"
                   id="header-notification-bell-btn"
                   onClick={onOpenNotifications}
-                  className={`flex items-center space-x-1 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold border transition-all active:scale-95 ${
+                  className={`flex items-center space-x-1 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold border transition-all active:scale-95 min-h-[44px] ${
                     highContrast
                       ? 'bg-amber-400 text-black border-white'
                       : theme === 'light'
@@ -160,11 +161,11 @@ export const Header = ({
                   title="iOS & Android Reminders & Chimes"
                 >
                   <BellRing className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <span className="hidden sm:inline">Alerts</span>
+                  <span className="hidden md:inline">Alerts</span>
                 </button>
               )}
 
-              {/* Sticky Accessible Hamburger Menu Button */}
+              {/* Sticky Accessible Hamburger Menu Button - Fixed layout bleeding */}
               <button
                 type="button"
                 id="main-hamburger-menu-btn"
@@ -172,7 +173,7 @@ export const Header = ({
                 aria-expanded={isMenuOpen}
                 aria-controls="hamburger-nav-drawer"
                 aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu and controls"}
-                className={`flex items-center space-x-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl font-black text-xs sm:text-sm border transition-all active:scale-95 shadow-xs ${
+                className={`flex items-center space-x-1.5 sm:space-x-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl font-black text-xs sm:text-sm border transition-all active:scale-95 shadow-xs shrink-0 ${
                   isMenuOpen
                     ? 'bg-amber-600 text-white border-amber-700 shadow-md ring-2 ring-amber-500/40'
                     : highContrast
