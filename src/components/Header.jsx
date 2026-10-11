@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
-import { ChefHat, Menu, X, Utensils, Calendar, BookOpen, Heart, Sparkles, ShoppingCart, Droplets, Contrast } from 'lucide-react';
+import { 
+  ChefHat, Menu, X, Utensils, Calendar, BookOpen, Heart, 
+  Sparkles, ShoppingCart, Droplets, Contrast, Moon, Sun, 
+  Bell, BellRing, Minus, Plus, ChevronRight, LayoutGrid
+} from 'lucide-react';
 
 /**
- * Responsive Navigation Header Component
- * Displays the site title "Jean's Vitality Kitchen" and placeholders for navigation links.
+ * Sticky Hamburger Menu Navbar Component
+ * Specifically optimized for iPad Air 2, tablets, phones, and desktops.
+ * Prevents horizontal layout bleed and consolidates Contrast, Theme, Font Size,
+ * Notifications, and all navigation links inside the accessible hamburger menu.
  */
 export const Header = ({
   title = "Jean's Vitality Kitchen",
@@ -14,255 +20,394 @@ export const Header = ({
   onToggleTheme,
   highContrast = false,
   onToggleHighContrast,
-  fontSizeControls,
-  onNavigate
+  fontSize = 'medium',
+  onIncreaseFontSize,
+  onDecreaseFontSize,
+  onNavigate,
+  onOpenNotifications
 }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Default placeholder navigation links
+  // Default senior navigation links
   const defaultLinks = [
-    { name: 'Home', href: '#home', icon: Sparkles },
-    { name: '7-Day Plan', href: '#meal-plan', icon: Calendar },
-    { name: 'Recipes', href: '#recipes', icon: Utensils },
-    { name: 'Hydration', href: '#water-tracker', icon: Droplets },
+    { name: 'Weekly Dashboard', href: '#meal-plan', icon: LayoutGrid },
+    { name: 'Recipe Cards', href: '#recipes', icon: ChefHat },
+    { name: '7-Day Schedule', href: '#schedule', icon: Calendar },
     { name: 'Shopping List', href: '#shopping-list', icon: ShoppingCart },
-    { name: 'Nutrition Guide', href: '#nutrition', icon: Heart },
+    { name: 'Hydration Tracker', href: '#water-tracker', icon: Droplets },
     { name: 'Kitchen Tips', href: '#tips', icon: BookOpen },
+    { name: 'Nutrition Targets', href: '#nutrition', icon: Heart },
   ];
 
   const navLinks = links || defaultLinks;
 
   const handleLinkClick = (href, e) => {
+    e.preventDefault();
     if (onNavigate) {
-      e.preventDefault();
       onNavigate(href);
     } else if (href && href.startsWith('#')) {
       const targetId = href.substring(1);
       if (targetId === 'home' || targetId === 'top') {
-        e.preventDefault();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         const element = document.getElementById(targetId);
         if (element) {
-          e.preventDefault();
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
     }
-    setIsMobileMenuOpen(false);
+    setIsMenuOpen(false);
   };
 
   return (
-    <header
-      id="main-header"
-      className="sticky top-0 z-50 w-full backdrop-blur-2xl bg-white/90 dark:bg-slate-900/90 border-b border-amber-200/60 dark:border-slate-800/80 shadow-xs transition-colors duration-200"
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
-          
-          {/* Logo & Site Title */}
-          <div className="flex items-center space-x-3">
-            <a
-              id="header-brand-logo"
-              href="#home"
-              onClick={(e) => handleLinkClick('#home', e)}
-              className="group flex items-center space-x-3 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 rounded-xl transition-transform active:scale-95"
-            >
-              <div className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 text-white shadow-md shadow-amber-600/25 group-hover:scale-105 transition-all">
-                <ChefHat className="w-6 h-6" aria-hidden="true" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-lg sm:text-xl font-extrabold tracking-tight text-stone-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
-                  {title}
-                </span>
-                {subtitle && (
-                  <span className="hidden sm:inline-block text-xs font-semibold text-amber-800 dark:text-amber-300">
-                    {subtitle}
-                  </span>
-                )}
-              </div>
-            </a>
-          </div>
-
-          {/* Desktop Navigation Links */}
-          <nav
-            id="desktop-navigation"
-            aria-label="Main Navigation"
-            className="hidden md:flex items-center space-x-1 lg:space-x-2"
-          >
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const isActive = currentPath === link.href;
-
-              return (
-                <a
-                  key={link.name}
-                  id={`nav-link-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  href={link.href}
-                  onClick={(e) => handleLinkClick(link.href, e)}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${
-                    isActive
-                      ? 'bg-amber-100 text-amber-950 dark:bg-amber-950/70 dark:text-amber-200 border border-amber-300/80 dark:border-amber-800/60 shadow-xs'
-                      : 'text-stone-800 dark:text-slate-200 hover:text-amber-900 dark:hover:text-white hover:bg-amber-50/90 dark:hover:bg-slate-800/80'
-                  }`}
+    <>
+      <header
+        id="main-sticky-header"
+        className={`sticky top-0 z-50 w-full transition-colors duration-200 border-b shadow-sm ${
+          highContrast
+            ? 'bg-black text-white border-amber-400'
+            : theme === 'light'
+              ? 'bg-white/95 text-stone-900 border-amber-200/80 shadow-[0_4px_20px_rgba(217,119,6,0.08)]'
+              : 'bg-slate-900/95 text-white border-slate-800'
+        }`}
+        style={{
+          WebkitBackdropFilter: 'blur(16px)',
+          backdropFilter: 'blur(16px)'
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
+            
+            {/* Logo & Site Title - Guaranteed non-squishing with shrink-0 */}
+            <div className="flex items-center space-x-2.5 sm:space-x-3.5 shrink-0 min-w-0">
+              <a
+                id="header-brand-logo"
+                href="#home"
+                onClick={(e) => handleLinkClick('#home', e)}
+                className="group flex items-center space-x-2.5 sm:space-x-3 rounded-2xl transition-transform active:scale-95 shrink-0 focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                aria-label="Jean's Vitality Kitchen Home"
+              >
+                {/* Fallback solid background color prevents blank box on Safari 15 */}
+                <div 
+                  className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-600 text-white shadow-md transition-transform group-hover:scale-105 shrink-0"
+                  style={{ backgroundColor: '#d97706' }}
                 >
-                  {Icon && <Icon className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />}
-                  <span>{link.name}</span>
-                </a>
-              );
-            })}
-          </nav>
+                  <ChefHat className="w-6 h-6 text-white" aria-hidden="true" />
+                </div>
+                
+                <div className="flex flex-col text-left truncate">
+                  <span className={`text-base sm:text-xl font-black tracking-tight leading-tight truncate ${
+                    highContrast ? 'text-amber-300' : theme === 'light' ? 'text-stone-900' : 'text-white'
+                  }`}>
+                    {title}
+                  </span>
+                  {subtitle && (
+                    <span className="text-[11px] sm:text-xs font-bold text-amber-700 dark:text-amber-400 truncate hidden xs:inline-block">
+                      {subtitle}
+                    </span>
+                  )}
+                </div>
+              </a>
+            </div>
 
-          {/* Right Header Actions & Mobile Menu Button */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* Custom actions slot or controls if passed */}
-            {fontSizeControls && (
-              <div className="hidden lg:flex items-center">
-                {fontSizeControls}
-              </div>
-            )}
+            {/* Right Action Bar: Notifications & Sticky Hamburger Menu */}
+            <div className="flex items-center space-x-2 shrink-0">
+              
+              {/* Quick Theme Toggle Button in Top Navbar */}
+              {onToggleTheme && (
+                <button
+                  type="button"
+                  id="header-theme-toggle-btn"
+                  onClick={onToggleTheme}
+                  className={`flex items-center space-x-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-black border transition-all active:scale-95 ${
+                    highContrast
+                      ? 'bg-amber-400 text-black border-white'
+                      : theme === 'light'
+                        ? 'bg-amber-50 hover:bg-amber-100 text-stone-900 border-amber-200 shadow-2xs'
+                        : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
+                  }`}
+                  aria-label={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+                  title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+                >
+                  {theme === 'light' ? (
+                    <>
+                      <Moon className="w-4 h-4 text-amber-700 shrink-0" />
+                      <span className="hidden sm:inline font-bold">Dark</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sun className="w-4 h-4 text-amber-300 shrink-0" />
+                      <span className="hidden sm:inline font-bold">Light</span>
+                    </>
+                  )}
+                </button>
+              )}
 
-            {/* High-Contrast Toggle Button */}
-            {onToggleHighContrast && (
+              {/* Quick Notification Bell Button */}
+              {onOpenNotifications && (
+                <button
+                  type="button"
+                  id="header-notification-bell-btn"
+                  onClick={onOpenNotifications}
+                  className={`flex items-center space-x-1 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold border transition-all active:scale-95 ${
+                    highContrast
+                      ? 'bg-amber-400 text-black border-white'
+                      : theme === 'light'
+                        ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
+                        : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
+                  }`}
+                  aria-label="Open iOS and Android notification alerts"
+                  title="iOS & Android Reminders & Chimes"
+                >
+                  <BellRing className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span className="hidden sm:inline">Alerts</span>
+                </button>
+              )}
+
+              {/* Sticky Accessible Hamburger Menu Button */}
               <button
-                id="header-high-contrast-toggle"
-                onClick={onToggleHighContrast}
                 type="button"
-                aria-pressed={highContrast}
-                aria-label={highContrast ? 'Disable high contrast mode' : 'Enable high contrast mode for visual impairments'}
-                title={highContrast ? 'High Contrast Mode: Active (Click to disable)' : 'Enable High Contrast Mode (Enhanced readability for visual impairments)'}
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-extrabold transition-all duration-150 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 border active:scale-95 ${
-                  highContrast
-                    ? 'bg-stone-950 text-amber-300 border-amber-400 dark:bg-amber-400 dark:text-stone-950 dark:border-white shadow-md ring-2 ring-amber-400/40'
-                    : 'text-stone-800 dark:text-slate-200 hover:bg-amber-100/70 dark:hover:bg-slate-800 border-amber-300/70 dark:border-slate-700'
+                id="main-hamburger-menu-btn"
+                onClick={() => setIsMenuOpen(prev => !prev)}
+                aria-expanded={isMenuOpen}
+                aria-controls="hamburger-nav-drawer"
+                aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu and controls"}
+                className={`flex items-center space-x-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl font-black text-xs sm:text-sm border transition-all active:scale-95 shadow-xs ${
+                  isMenuOpen
+                    ? 'bg-amber-600 text-white border-amber-700 shadow-md ring-2 ring-amber-500/40'
+                    : highContrast
+                      ? 'bg-stone-950 text-white border-amber-400 hover:bg-stone-900'
+                      : theme === 'light'
+                        ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600'
+                        : 'bg-amber-600 hover:bg-amber-500 text-white border-amber-500'
                 }`}
+                style={{ minHeight: '44px' }}
               >
-                <Contrast className={`w-4 h-4 ${highContrast ? 'text-amber-300 dark:text-stone-950' : 'text-amber-700 dark:text-amber-400'}`} aria-hidden="true" />
-                <span className="hidden xl:inline">{highContrast ? 'Contrast: ON' : 'High Contrast'}</span>
-              </button>
-            )}
-
-            {onToggleTheme && (
-              <button
-                id="header-theme-toggle"
-                onClick={onToggleTheme}
-                type="button"
-                className="p-2.5 rounded-xl text-stone-800 dark:text-slate-200 hover:bg-amber-100/70 dark:hover:bg-slate-800 border border-amber-300/70 dark:border-slate-700 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
-                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-                title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-              >
-                <span className="text-sm font-bold">{theme === 'light' ? '🌙' : '☀️'}</span>
-              </button>
-            )}
-
-            <a
-              id="header-cta-button"
-              href="#meal-plan"
-              onClick={(e) => handleLinkClick('#meal-plan', e)}
-              className="hidden sm:inline-flex items-center justify-center px-4.5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 dark:from-amber-500 dark:to-orange-500 rounded-xl shadow-xs shadow-amber-600/30 hover:shadow-md transition-all active:scale-95"
-            >
-              View 7-Day Plan
-            </a>
-
-            {/* Mobile Hamburger Button */}
-            <div className="flex md:hidden">
-              <button
-                id="mobile-menu-toggle-button"
-                type="button"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-expanded={isMobileMenuOpen}
-                aria-controls="mobile-navigation-menu"
-                aria-label="Toggle navigation menu"
-                className="p-2.5 rounded-xl text-stone-900 dark:text-slate-100 hover:bg-amber-100/70 dark:hover:bg-slate-800 border border-amber-300/70 dark:border-slate-700 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
-              >
-                {isMobileMenuOpen ? (
-                  <X className="w-6 h-6" aria-hidden="true" />
+                {isMenuOpen ? (
+                  <X className="w-5 h-5 shrink-0" aria-hidden="true" />
                 ) : (
-                  <Menu className="w-6 h-6" aria-hidden="true" />
+                  <Menu className="w-5 h-5 shrink-0" aria-hidden="true" />
                 )}
+                <span className="font-extrabold uppercase tracking-wide">
+                  {isMenuOpen ? 'Close' : 'Menu'}
+                </span>
               </button>
             </div>
+
           </div>
-
         </div>
-      </div>
+      </header>
 
-      {/* Mobile Collapsible Navigation Menu */}
-      {isMobileMenuOpen && (
-        <div
-          id="mobile-navigation-menu"
-          className="md:hidden border-t border-amber-200/80 dark:border-slate-800 bg-white/98 dark:bg-slate-900/98 backdrop-blur-2xl animate-in slide-in-from-top-2 duration-200 shadow-2xl"
+      {/* Slide-in Hamburger Menu Overlay & Drawer */}
+      {isMenuOpen && (
+        <div 
+          id="hamburger-nav-backdrop"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity"
+          onClick={() => setIsMenuOpen(false)}
         >
-          <div className="px-4 pt-3 pb-5 space-y-2">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const isActive = currentPath === link.href;
-
-              return (
-                <a
-                  key={link.name}
-                  id={`mobile-nav-link-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  href={link.href}
-                  onClick={(e) => handleLinkClick(link.href, e)}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`flex items-center space-x-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-colors ${
-                    isActive
-                      ? 'bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-200 border border-amber-300/80'
-                      : 'text-stone-800 dark:text-slate-100 hover:bg-amber-50/90 dark:hover:bg-slate-800/80'
-                  }`}
+          <div
+            id="hamburger-nav-drawer"
+            className={`fixed top-0 right-0 bottom-0 w-full sm:w-96 max-w-[90vw] overflow-y-auto shadow-2xl flex flex-col z-50 transition-transform duration-300 ${
+              highContrast
+                ? 'bg-black text-white border-l-2 border-amber-400'
+                : theme === 'light'
+                  ? 'bg-white text-stone-900 border-l border-amber-200'
+                  : 'bg-slate-900 text-white border-l border-slate-800'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer Top Header */}
+            <div className="p-5 border-b border-amber-200 dark:border-slate-800 flex items-center justify-between bg-amber-50/50 dark:bg-slate-950/50">
+              <div className="flex items-center space-x-2.5">
+                <div 
+                  className="p-2 rounded-xl bg-amber-600 text-white"
+                  style={{ backgroundColor: '#d97706' }}
                 >
-                  {Icon && <Icon className="w-5 h-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />}
-                  <span>{link.name}</span>
-                </a>
-              );
-            })}
-
-            {/* Mobile Actions Area */}
-            <div className="pt-4 mt-3 border-t border-amber-100 dark:border-slate-800 flex flex-col gap-3">
-              {fontSizeControls && (
-                <div className="flex justify-between items-center px-2 py-1">
-                  <span className="text-sm font-bold text-stone-800 dark:text-slate-200">Text Size</span>
-                  {fontSizeControls}
+                  <ChefHat className="w-5 h-5 text-white" />
                 </div>
-              )}
+                <div>
+                  <h3 className="font-black text-base">Menu & Settings</h3>
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 font-bold">Jean's Vitality Kitchen</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                id="close-drawer-btn"
+                onClick={() => setIsMenuOpen(false)}
+                className="p-2 rounded-xl border border-stone-200 dark:border-slate-700 hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Close menu drawer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Quick Senior Accessibility Controls Panel inside Menu */}
+            <div className="p-5 space-y-4 border-b border-amber-200 dark:border-slate-800 bg-stone-50/70 dark:bg-slate-800/40">
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 block">
+                Senior Accessibility Settings
+              </span>
+
+              {/* High Contrast Mode Toggle */}
               {onToggleHighContrast && (
-                <div className="flex justify-between items-center px-2 py-1">
-                  <div className="flex items-center space-x-2">
-                    <Contrast className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                    <span className="text-sm font-bold text-stone-800 dark:text-slate-200">High Contrast</span>
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 shadow-2xs">
+                  <div className="flex items-center space-x-2.5">
+                    <Contrast className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-black">High Contrast Mode</h4>
+                      <p className="text-[11px] text-stone-500 dark:text-slate-400">Bold text & high visibility borders</p>
+                    </div>
                   </div>
                   <button
-                    id="mobile-high-contrast-toggle"
-                    onClick={onToggleHighContrast}
                     type="button"
-                    aria-pressed={highContrast}
-                    aria-label="Toggle high contrast mode"
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                    id="drawer-contrast-toggle"
+                    onClick={onToggleHighContrast}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all border ${
                       highContrast
-                        ? 'bg-stone-950 text-amber-300 border-amber-400 dark:bg-amber-400 dark:text-stone-950 shadow-xs'
-                        : 'bg-white dark:bg-slate-800 text-stone-700 dark:text-slate-300 border-amber-300 dark:border-slate-700'
+                        ? 'bg-amber-400 text-black border-black shadow-xs'
+                        : 'bg-stone-100 dark:bg-slate-800 text-stone-700 dark:text-slate-200 border-stone-300 dark:border-slate-600'
                     }`}
                   >
                     {highContrast ? 'ON' : 'OFF'}
                   </button>
                 </div>
               )}
+
+              {/* Theme Toggle (Light / Dark) */}
+              {onToggleTheme && (
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 shadow-2xs">
+                  <div className="flex items-center space-x-2.5">
+                    {theme === 'light' ? (
+                      <Sun className="w-5 h-5 text-amber-600 shrink-0" />
+                    ) : (
+                      <Moon className="w-5 h-5 text-amber-400 shrink-0" />
+                    )}
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-black">Color Theme</h4>
+                      <p className="text-[11px] text-stone-500 dark:text-slate-400">
+                        {theme === 'light' ? 'Gentle Light Theme' : 'Relaxing Dark Theme'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    id="drawer-theme-toggle"
+                    onClick={onToggleTheme}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-600"
+                  >
+                    <span>{theme === 'light' ? '🌙 Dark' : '☀️ Light'}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Font Size Adjusters */}
+              {onIncreaseFontSize && onDecreaseFontSize && (
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 shadow-2xs">
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-black">Display Text Size</h4>
+                    <p className="text-[11px] text-stone-500 dark:text-slate-400">
+                      Current: <strong className="text-amber-600 dark:text-amber-400">{fontSize.toUpperCase()}</strong>
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      type="button"
+                      onClick={onDecreaseFontSize}
+                      className="p-2 rounded-xl border border-stone-300 dark:border-slate-600 hover:bg-stone-100 dark:hover:bg-slate-800 active:scale-95"
+                      aria-label="Decrease text size"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-7 text-center font-black text-xs text-amber-600">
+                      {fontSize === 'small' ? 'A' : fontSize === 'medium' ? 'A+' : fontSize === 'large' ? 'A++' : 'MAX'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={onIncreaseFontSize}
+                      className="p-2 rounded-xl border border-stone-300 dark:border-slate-600 hover:bg-stone-100 dark:hover:bg-slate-800 active:scale-95"
+                      aria-label="Increase text size"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Mobile / Tablet Notifications Trigger */}
+              {onOpenNotifications && (
+                <button
+                  type="button"
+                  id="drawer-notifications-btn"
+                  onClick={() => {
+                    onOpenNotifications();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 shadow-2xs text-left hover:border-amber-400 transition-colors"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <BellRing className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-black">iOS & Android Alerts</h4>
+                      <p className="text-[11px] text-stone-500 dark:text-slate-400">Hydration & meal reminders</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-stone-400" />
+                </button>
+              )}
+            </div>
+
+            {/* Navigation Links Area */}
+            <div className="p-5 flex-1 space-y-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 block mb-3">
+                Navigation Menu
+              </span>
+
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const isActive = currentPath === link.href;
+
+                return (
+                  <a
+                    key={link.name}
+                    id={`drawer-link-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    href={link.href}
+                    onClick={(e) => handleLinkClick(link.href, e)}
+                    className={`flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm sm:text-base font-bold transition-all ${
+                      isActive
+                        ? 'bg-amber-600 text-white shadow-md'
+                        : theme === 'light'
+                          ? 'text-stone-800 hover:bg-amber-50 hover:text-amber-900 border border-stone-100'
+                          : 'text-slate-200 hover:bg-slate-800 border border-slate-800/80'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      {Icon && <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-amber-600 dark:text-amber-400'}`} />}
+                      <span>{link.name}</span>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 ${isActive ? 'text-white' : 'text-stone-400'}`} />
+                  </a>
+                );
+              })}
+            </div>
+
+            {/* Bottom Drawer CTA */}
+            <div className="p-5 border-t border-amber-200 dark:border-slate-800 bg-amber-50/50 dark:bg-slate-950/50">
               <a
-                id="mobile-cta-button"
                 href="#meal-plan"
                 onClick={(e) => handleLinkClick('#meal-plan', e)}
-                className="w-full flex items-center justify-center px-4 py-3.5 text-base font-bold text-white bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 rounded-xl shadow-md transition-all"
+                className="w-full flex items-center justify-center space-x-2 py-3.5 px-4 rounded-2xl font-black text-sm text-white bg-amber-600 hover:bg-amber-700 shadow-md transition-all active:scale-95"
+                style={{ backgroundColor: '#d97706' }}
               >
-                View 7-Day Plan
+                <Calendar className="w-4 h-4 text-white" />
+                <span>Open Weekly Meal Plan</span>
               </a>
             </div>
+
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 };
 
 export default Header;
-

@@ -621,3 +621,81 @@ export const getMealMeta = (dayId: string, mealType: string) => {
   const key = `${dayId}-${mealType}`;
   return recipeMetadataMap[key] || recipeMetadataMap["monday-breakfast"];
 };
+
+/**
+ * Returns senior health tags for a meal (Quick, Heart-Healthy, High Protein, Vegetarian, Low GI, Bone & Joint)
+ */
+export const getMealTags = (
+  meal: { description?: string; protein?: number; vegetarian?: boolean; recipe?: { prepTime?: string; ingredients?: string[] } },
+  meta?: { nutrition?: NutritionData }
+): string[] => {
+  const tags: string[] = [];
+  const prep = parseInt(meal.recipe?.prepTime || '15') || 15;
+  
+  if (prep <= 15) {
+    tags.push('Quick');
+  }
+
+  if ((meal.protein ?? 0) >= 25) {
+    tags.push('High Protein');
+  }
+
+  if (meal.vegetarian) {
+    tags.push('Vegetarian');
+  }
+
+  const desc = (meal.description || '').toLowerCase();
+  const ingStr = (meal.recipe?.ingredients || []).join(' ').toLowerCase();
+  const highlight = (meta?.nutrition?.seniorHealthHighlight || '').toLowerCase();
+
+  // Heart-Healthy: Omega-3s, low sodium, potassium, nuts, berries, salmon, lentils
+  if (
+    desc.includes('salmon') || desc.includes('avocado') || desc.includes('walnut') ||
+    desc.includes('chia') || desc.includes('lentil') || desc.includes('oat') ||
+    desc.includes('berries') || desc.includes('tuna') || desc.includes('olive') ||
+    ingStr.includes('salmon') || ingStr.includes('olive oil') || ingStr.includes('tuna') ||
+    highlight.includes('heart') || highlight.includes('omega-3') || highlight.includes('cholesterol') ||
+    highlight.includes('blood pressure') || (meta?.nutrition?.sodium !== undefined && meta.nutrition.sodium <= 250)
+  ) {
+    tags.push('Heart-Healthy');
+  }
+
+  // Bone & Joint: Calcium, vitamin D, anti-inflammatory
+  if (
+    desc.includes('yogurt') || desc.includes('cottage cheese') || desc.includes('tofu') ||
+    desc.includes('spinach') || desc.includes('salmon') ||
+    (meta?.nutrition?.calcium !== undefined && meta.nutrition.calcium >= 200) ||
+    highlight.includes('bone') || highlight.includes('joint')
+  ) {
+    tags.push('Bone & Joint');
+  }
+
+  // Low GI: Steady blood sugar release
+  if (
+    meta?.nutrition?.glycemicIndex === 'Low' ||
+    desc.includes('chia') || desc.includes('oat') || desc.includes('quinoa') || desc.includes('lentil') ||
+    desc.includes('brown rice') || desc.includes('wild rice')
+  ) {
+    tags.push('Low GI');
+  }
+
+  return tags;
+};
+
+/**
+ * Returns comprehensive macro numbers (protein, carbs, fat, calories) for a meal
+ */
+export const getMealMacros = (dayId: string, mealType: string, meal?: { protein?: number }) => {
+  const meta = getMealMeta(dayId, mealType);
+  return {
+    protein: meal?.protein ?? meta.nutrition.protein,
+    carbs: meta.nutrition.carbs,
+    fat: meta.nutrition.fat,
+    calories: meta.nutrition.calories,
+    fiber: meta.nutrition.fiber,
+    sodium: meta.nutrition.sodium,
+    calcium: meta.nutrition.calcium,
+    potassium: meta.nutrition.potassium,
+    seniorHighlight: meta.nutrition.seniorHealthHighlight
+  };
+};

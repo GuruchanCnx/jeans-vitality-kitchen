@@ -1,18 +1,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Calendar, Utensils, Leaf, Heart, Activity, Menu, X, ChevronUp, Coffee, Book, Scissors, Clock, ChefHat, Sun, Moon, Minus, Plus, Filter, Sparkles, CheckCircle2, AlertCircle, Search, RotateCcw, ChevronDown, LayoutGrid, ListFilter, ShoppingCart } from 'lucide-react';
+import { Calendar, Utensils, Leaf, Heart, Activity, Menu, X, ChevronUp, Coffee, Book, Scissors, Clock, ChefHat, Sun, Moon, Minus, Plus, Filter, Sparkles, CheckCircle2, AlertCircle, Search, RotateCcw, ChevronDown, LayoutGrid, ListFilter, ShoppingCart, Droplets, Contrast, Users } from 'lucide-react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import SearchBar from './components/SearchBar';
 import RecipeList from './components/RecipeList';
 import ShoppingList from './components/ShoppingList';
 import WaterTracker from './components/WaterTracker';
+import WeeklyMealPlanDashboard from './components/WeeklyMealPlanDashboard';
+import SeniorRecipeModal from './components/SeniorRecipeModal';
 import { getMealMeta } from './data/recipeImages';
+import { scaleRecipeIngredients } from './utils/servings';
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [expandedRecipes, setExpandedRecipes] = useState({});
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('jeans_vitality_theme') || 'light';
+    } catch {
+      return 'light';
+    }
+  });
   const [highContrast, setHighContrast] = useState(() => {
     try {
       return localStorage.getItem('jeans_high_contrast') === 'true';
@@ -23,15 +32,75 @@ const App = () => {
   const [fontSize, setFontSize] = useState('medium');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all'); // 'all' | 'vegetarian' | 'quick' | 'high-protein'
-  const [viewMode, setViewMode] = useState('cards'); // 'cards' (RecipeList) | 'daily' (7-Day schedule)
+  const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' | 'cards' | 'daily' | 'shopping'
+  const [selectedSeniorModalMeal, setSelectedSeniorModalMeal] = useState(null);
 
-  // Apply theme and high-contrast classes to body
+  // Recipe Serving Size state: Record<recipeKey, number> (e.g. 'monday-breakfast': 2)
+  const [servingSizes, setServingSizes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('jeans_vitality_serving_sizes');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const updateServingSize = (recipeKey, newServings) => {
+    const valid = Math.max(1, Math.min(12, Math.round(newServings)));
+    setServingSizes(prev => {
+      const updated = { ...prev, [recipeKey]: valid };
+      try {
+        localStorage.setItem('jeans_vitality_serving_sizes', JSON.stringify(updated));
+      } catch {
+        // Ignore
+      }
+      return updated;
+    });
+  };
+
+  const resetAllServingSizes = () => {
+    setServingSizes({});
+    try {
+      localStorage.removeItem('jeans_vitality_serving_sizes');
+    } catch {
+      // Ignore
+    }
+  };
+
+  const setGlobalServingSize = (servings) => {
+    const valid = Math.max(1, Math.min(12, Math.round(servings)));
+    const updated = {};
+    mealPlan.forEach(d => {
+      Object.keys(d.meals).forEach(m => {
+        updated[`${d.id}-${m}`] = valid;
+      });
+    });
+    setServingSizes(updated);
+    try {
+      localStorage.setItem('jeans_vitality_serving_sizes', JSON.stringify(updated));
+    } catch {
+      // Ignore
+    }
+  };
+
+  // Apply theme and high-contrast classes to both documentElement and body
   useEffect(() => {
     try {
+      localStorage.setItem('jeans_vitality_theme', theme);
       localStorage.setItem('jeans_high_contrast', String(highContrast));
     } catch {
       // Ignore in restricted iframe contexts
     }
+
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+
     document.body.className = `${theme} ${highContrast ? 'high-contrast' : ''}`;
   }, [theme, highContrast]);
 
@@ -114,9 +183,22 @@ const App = () => {
         document.getElementById('recipes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 60);
     } else if (href === '#meal-plan') {
+      setViewMode('dashboard');
+      setTimeout(() => {
+        document.getElementById('recipes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    } else if (href === '#schedule') {
       setViewMode('daily');
       setTimeout(() => {
         document.getElementById('recipes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    } else if (href === '#water-tracker') {
+      setTimeout(() => {
+        document.getElementById('water-tracker')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    } else if (href === '#tips') {
+      setTimeout(() => {
+        document.getElementById('tips')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 60);
     } else {
       const targetId = href.startsWith('#') ? href.substring(1) : href;
@@ -836,6 +918,7 @@ const App = () => {
     { name: 'Home', href: '#home', icon: Coffee },
     { name: 'Recipes', href: '#recipes', icon: ChefHat },
     { name: '7-Day Plan', href: '#meal-plan', icon: Calendar },
+    { name: 'Hydration', href: '#water-tracker', icon: Droplets },
     { name: 'Shopping List', href: '#shopping-list', icon: ShoppingCart },
     { name: 'Kitchen Tips', href: '#tips', icon: Book },
   ];
@@ -979,8 +1062,11 @@ const App = () => {
         title="Jean's Vitality Kitchen"
         subtitle="High-Protein Senior Nutrition & Vitality"
         links={navLinks}
+        currentPath={viewMode === 'shopping' ? '#shopping-list' : viewMode === 'cards' ? '#recipes' : '#meal-plan'}
         theme={theme}
+        highContrast={highContrast}
         onToggleTheme={toggleTheme}
+        onToggleHighContrast={toggleHighContrast}
         onNavigate={handleNavigate}
         fontSizeControls={
           <div className="flex items-center space-x-1 p-1 rounded-xl backdrop-blur-md bg-amber-100/70 dark:bg-slate-800/80 border border-amber-300/60 dark:border-slate-700">
@@ -1110,64 +1196,102 @@ const App = () => {
             </div>
 
             {/* Segmented View Switcher */}
-            <div className={`flex items-center p-1.5 rounded-2xl border ${
+            <div className={`flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl border ${
               theme === 'light'
                 ? 'bg-stone-100/90 border-stone-200'
                 : 'bg-slate-800/90 border-slate-700'
             }`}>
               <button
                 type="button"
+                id="tab-view-dashboard"
+                onClick={() => setViewMode('dashboard')}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+                  viewMode === 'dashboard'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : theme === 'light'
+                      ? 'text-stone-700 hover:text-stone-950 hover:bg-stone-200/60'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+                }`}
+                aria-pressed={viewMode === 'dashboard'}
+              >
+                <LayoutGrid className="w-4 h-4 shrink-0" />
+                <span>Weekly Dashboard</span>
+              </button>
+
+              <button
+                type="button"
+                id="tab-view-cards"
                 onClick={() => setViewMode('cards')}
-                className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+                className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
                   viewMode === 'cards'
                     ? 'bg-amber-600 text-white shadow-sm'
                     : theme === 'light'
-                      ? 'text-stone-700 hover:text-stone-950'
-                      : 'text-slate-300 hover:text-white'
+                      ? 'text-stone-700 hover:text-stone-950 hover:bg-stone-200/60'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
                 }`}
                 aria-pressed={viewMode === 'cards'}
               >
-                <LayoutGrid className="w-4 h-4" />
+                <ChefHat className="w-4 h-4 shrink-0" />
                 <span>Recipe Cards</span>
               </button>
 
               <button
                 type="button"
+                id="tab-view-daily"
                 onClick={() => setViewMode('daily')}
-                className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+                className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
                   viewMode === 'daily'
                     ? 'bg-amber-600 text-white shadow-sm'
                     : theme === 'light'
-                      ? 'text-stone-700 hover:text-stone-950'
-                      : 'text-slate-300 hover:text-white'
+                      ? 'text-stone-700 hover:text-stone-950 hover:bg-stone-200/60'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
                 }`}
                 aria-pressed={viewMode === 'daily'}
               >
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-4 h-4 shrink-0" />
                 <span>7-Day Schedule</span>
               </button>
 
               <button
                 type="button"
+                id="tab-view-shopping"
                 onClick={() => setViewMode('shopping')}
-                className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+                className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
                   viewMode === 'shopping'
                     ? 'bg-amber-600 text-white shadow-sm'
                     : theme === 'light'
-                      ? 'text-stone-700 hover:text-stone-950'
-                      : 'text-slate-300 hover:text-white'
+                      ? 'text-stone-700 hover:text-stone-950 hover:bg-stone-200/60'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
                 }`}
                 aria-pressed={viewMode === 'shopping'}
               >
-                <ShoppingCart className="w-4 h-4" />
+                <ShoppingCart className="w-4 h-4 shrink-0" />
                 <span>Grocery List</span>
               </button>
             </div>
           </div>
 
           {/* Render Active View */}
-          {viewMode === 'shopping' ? (
-            <ShoppingList mealPlan={mealPlan} theme={theme} />
+          {viewMode === 'dashboard' ? (
+            <div id="weekly-dashboard-container" className="animate-in fade-in duration-300">
+              <WeeklyMealPlanDashboard
+                mealPlan={mealPlan}
+                theme={theme}
+                highContrast={highContrast}
+                onOpenRecipeModal={(meal) => setSelectedSeniorModalMeal(meal)}
+                servingSizes={servingSizes}
+                onUpdateServingSize={updateServingSize}
+              />
+            </div>
+          ) : viewMode === 'shopping' ? (
+            <ShoppingList 
+              mealPlan={mealPlan} 
+              theme={theme}
+              servingSizes={servingSizes}
+              onUpdateServingSize={updateServingSize}
+              onResetServingSizes={resetAllServingSizes}
+              onSetGlobalServingSize={setGlobalServingSize}
+            />
           ) : viewMode === 'cards' ? (
             /* RecipeList Component View */
             <div id="recipe-list-section">
@@ -1207,6 +1331,8 @@ const App = () => {
                   onToggleRecipe={toggleRecipe}
                   expandedRecipes={expandedRecipes}
                   searchQuery={searchQuery}
+                  servingSizes={servingSizes}
+                  onUpdateServingSize={updateServingSize}
                 />
               )}
             </div>
@@ -1517,25 +1643,66 @@ const App = () => {
                                   <div className={`mt-4 pt-4 border-t transition-all duration-300 space-y-3.5 ${
                                     theme === 'light' ? 'border-amber-200' : 'border-slate-700'
                                   }`}>
-                                    <div className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-md ${
-                                      theme === 'light' 
-                                        ? 'bg-amber-100/90 text-amber-950 border border-amber-300/70' 
-                                        : 'bg-amber-950/80 text-amber-300 border border-amber-800/60'
-                                    }`}>
-                                      <Clock className="h-3.5 w-3.5 mr-1" />
-                                      Prep Time: {meal.recipe.prepTime}
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                      <div className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-md ${
+                                        theme === 'light' 
+                                          ? 'bg-amber-100/90 text-amber-950 border border-amber-300/70' 
+                                          : 'bg-amber-950/80 text-amber-300 border border-amber-800/60'
+                                      }`}>
+                                        <Clock className="h-3.5 w-3.5 mr-1" />
+                                        Prep Time: {meal.recipe.prepTime}
+                                      </div>
+
+                                      {/* Serving Size Selector */}
+                                      <div className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl border text-xs font-bold ${
+                                        theme === 'light'
+                                          ? 'bg-amber-50 border-amber-200 text-stone-800'
+                                          : 'bg-slate-800 border-slate-700 text-slate-200'
+                                      }`}>
+                                        <Users className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                                        <span className="text-[11px]">Servings:</span>
+                                        <div className="flex items-center space-x-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => updateServingSize(`${dayPlan.id}-${mealType}`, (servingSizes[`${dayPlan.id}-${mealType}`] || 1) - 1)}
+                                            disabled={(servingSizes[`${dayPlan.id}-${mealType}`] || 1) <= 1}
+                                            className="p-0.5 rounded-sm hover:bg-white dark:hover:bg-slate-700 text-stone-700 dark:text-slate-200 disabled:opacity-30"
+                                            title="Decrease servings"
+                                          >
+                                            <Minus className="w-3 h-3" />
+                                          </button>
+                                          <span className="w-5 text-center font-black text-amber-600 dark:text-amber-400">
+                                            {servingSizes[`${dayPlan.id}-${mealType}`] || 1}
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => updateServingSize(`${dayPlan.id}-${mealType}`, (servingSizes[`${dayPlan.id}-${mealType}`] || 1) + 1)}
+                                            className="p-0.5 rounded-sm hover:bg-white dark:hover:bg-slate-700 text-stone-700 dark:text-slate-200"
+                                            title="Increase servings"
+                                          >
+                                            <Plus className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      </div>
                                     </div>
                                     
                                     <div>
-                                      <h5 className={`font-bold text-xs uppercase tracking-wider mb-2 ${
-                                        theme === 'light' ? 'text-stone-900' : 'text-white'
-                                      }`}>
-                                        Ingredients:
-                                      </h5>
+                                      <div className="flex items-center justify-between mb-2">
+                                        <h5 className={`font-bold text-xs uppercase tracking-wider ${
+                                          theme === 'light' ? 'text-stone-900' : 'text-white'
+                                        }`}>
+                                          Ingredients:
+                                        </h5>
+                                        {(servingSizes[`${dayPlan.id}-${mealType}`] || 1) > 1 && (
+                                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                                            Scaled for {servingSizes[`${dayPlan.id}-${mealType}`]} servings
+                                          </span>
+                                        )}
+                                      </div>
                                       <ul className={`space-y-1.5 text-xs font-medium ${
                                         theme === 'light' ? 'text-stone-800' : 'text-slate-200'
                                       }`}>
-                                        {meal.recipe.ingredients.map((ingredient, idx) => {
+                                        {scaleRecipeIngredients(meal.recipe.ingredients, servingSizes[`${dayPlan.id}-${mealType}`] || 1).map((ingredient, idx) => {
                                           const isIngredientMatch = searchQuery.trim() !== '' && 
                                             ingredient.toLowerCase().includes(searchQuery.trim().toLowerCase());
 
@@ -1647,19 +1814,104 @@ const App = () => {
         </section>
       </main>
 
+      {/* Detailed Senior Recipe Modal */}
+      {selectedSeniorModalMeal && (
+        <SeniorRecipeModal
+          isOpen={!!selectedSeniorModalMeal}
+          onClose={() => setSelectedSeniorModalMeal(null)}
+          meal={selectedSeniorModalMeal}
+          theme={theme}
+          highContrast={highContrast}
+          servingSizes={servingSizes}
+          onUpdateServingSize={updateServingSize}
+        />
+      )}
+
+      {/* Senior Accessibility Floating Quick Toolbar */}
+      <aside 
+        id="floating-accessibility-toolbar"
+        aria-label="Accessibility quick controls"
+        className={`fixed bottom-5 left-4 sm:left-6 z-40 flex items-center p-1.5 rounded-2xl shadow-xl backdrop-blur-xl border transition-all duration-300 ${
+          highContrast
+            ? 'bg-stone-950 text-white border-amber-400 ring-2 ring-amber-400 shadow-2xl'
+            : theme === 'light'
+              ? 'bg-white/95 text-stone-900 border-amber-200/90 shadow-[0_8px_30px_rgba(217,119,6,0.18)]'
+              : 'bg-slate-900/95 text-white border-slate-700 shadow-2xl'
+        }`}
+      >
+        {/* High Contrast Mode Global Toggle */}
+        <button
+          type="button"
+          id="floating-high-contrast-toggle"
+          onClick={toggleHighContrast}
+          aria-pressed={highContrast}
+          aria-label={highContrast ? 'Disable high contrast accessibility mode' : 'Enable high contrast accessibility mode'}
+          title={highContrast ? 'High Contrast Mode: Active (Click to switch to Default Theme)' : 'Enable High Contrast Mode for enhanced senior readability'}
+          className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all active:scale-95 ${
+            highContrast
+              ? 'bg-amber-400 text-stone-950 border border-stone-950 shadow-xs'
+              : 'bg-amber-100 hover:bg-amber-200 text-amber-950 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-amber-300 border border-amber-300/60 dark:border-slate-700'
+          }`}
+        >
+          <Contrast className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">{highContrast ? 'Contrast: ON' : 'High Contrast'}</span>
+          <span className="sm:hidden">{highContrast ? 'ON' : 'Contrast'}</span>
+        </button>
+
+        <div className="h-5 w-px bg-stone-200 dark:bg-slate-700 mx-1" />
+
+        {/* Font Size Adjusters */}
+        <div className="flex items-center space-x-0.5">
+          <button
+            type="button"
+            onClick={decreaseFontSize}
+            title="Decrease text size"
+            aria-label="Decrease text size"
+            className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800 text-stone-700 dark:text-slate-200 transition-colors"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <span className="text-xs font-black px-1 text-amber-600 dark:text-amber-400 select-none">
+            {fontSize === 'small' ? 'A' : fontSize === 'medium' ? 'A+' : fontSize === 'large' ? 'A++' : 'MAX'}
+          </span>
+          <button
+            type="button"
+            onClick={increaseFontSize}
+            title="Increase text size"
+            aria-label="Increase text size"
+            className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800 text-stone-700 dark:text-slate-200 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="h-5 w-px bg-stone-200 dark:bg-slate-700 mx-1" />
+
+        {/* Theme Toggle */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+          aria-label={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+          className="p-2 rounded-xl hover:bg-stone-100 dark:hover:bg-slate-800 text-xs font-bold transition-colors"
+        >
+          {theme === 'light' ? '🌙' : '☀️'}
+        </button>
+      </aside>
+
       {/* Back to Top Floating Glass Button */}
       {showBackToTop && (
         <button
           onClick={scrollToTop}
           type="button"
-          className={`fixed bottom-6 right-6 p-3.5 rounded-full shadow-2xl transition-all duration-200 transform hover:scale-110 focus:outline-hidden focus-visible:ring-4 focus-visible:ring-amber-500/50 z-40 backdrop-blur-xl border ${
+          className={`fixed bottom-5 right-4 sm:right-6 p-3 rounded-full shadow-2xl transition-all duration-200 transform hover:scale-110 focus:outline-hidden focus-visible:ring-4 focus-visible:ring-amber-500/50 z-40 backdrop-blur-xl border ${
             theme === 'light'
               ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white border-amber-300/80 shadow-amber-900/20'
               : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white border-slate-600 shadow-black/50'
           }`}
           aria-label="Scroll back to top"
         >
-          <ChevronUp className="h-6 w-6 stroke-[2.5]" />
+          <ChevronUp className="h-5 w-5 stroke-[2.5]" />
         </button>
       )}
     </div>

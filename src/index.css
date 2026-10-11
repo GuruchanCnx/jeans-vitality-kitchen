@@ -1,10 +1,24 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  html.dark, body.dark {
+    background-color: #0b1120;
+    color: #f1f5f9;
+    color-scheme: dark;
+  }
+
+  html.light, body.light {
+    background-color: #fafaf9;
+    color: #1c1917;
+    color-scheme: light;
   }
   
   body {
@@ -39,7 +53,6 @@ body.high-contrast.dark {
 
 /* Enforce high-contrast text and crisp boundaries in light mode */
 body.high-contrast.light p,
-body.high-contrast.light span,
 body.high-contrast.light li,
 body.high-contrast.light h1,
 body.high-contrast.light h2,
@@ -50,15 +63,24 @@ body.high-contrast.light label {
   text-shadow: none !important;
 }
 
+body.high-contrast.light span:not(button *, [class*="text-white"], [class*="bg-amber-6"], [class*="bg-emerald-6"], [class*="bg-sky-6"], [class*="bg-black"]) {
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
 /* Enforce high-contrast text and crisp boundaries in dark mode */
 body.high-contrast.dark p,
-body.high-contrast.dark span,
 body.high-contrast.dark li,
 body.high-contrast.dark h1,
 body.high-contrast.dark h2,
 body.high-contrast.dark h3,
 body.high-contrast.dark h4,
 body.high-contrast.dark label {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+body.high-contrast.dark span:not(button *, [class*="text-stone-950"], [class*="text-black"]) {
   color: #ffffff !important;
   text-shadow: none !important;
 }
@@ -97,4 +119,76 @@ body.high-contrast *:focus-visible {
   outline: 3px solid #e11d48 !important;
   outline-offset: 3px !important;
 }
+
+/* ==========================================================================
+   Print-Friendly Styles for Seniors (Ink-saving, high contrast, clean layout)
+   ========================================================================== */
+@media print {
+  /* Hide non-printable elements like sticky headers, modals backdrop, action buttons, toolbars */
+  header,
+  nav,
+  aside,
+  footer,
+  #hamburger-menu,
+  .print-hide,
+  button,
+  input,
+  [role="dialog"] > div:first-child:not(.printable-content-root),
+  .sticky {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 14pt !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+  }
+
+  /* Force print modal / printable document to fill page */
+  #printable-grocery-list,
+  .printable-area {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Ensure text is solid black for maximum clarity on paper */
+  #printable-grocery-list *,
+  .printable-area * {
+    color: #000000 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Keep borders visible and crisp for printed checkboxes and tables */
+  #printable-grocery-list .print-border,
+  .print-checkbox-box {
+    border: 2px solid #000000 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevent page breaks inside shopping items or meal cards */
+  .print-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Ruled note lines for handwriting in store */
+  .print-ruled-line {
+    border-bottom: 1px dashed #666666 !important;
+  }
+}
+
 
