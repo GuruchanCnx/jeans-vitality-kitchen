@@ -114,6 +114,28 @@ export const Header = ({
             {/* Right Action Bar: Theme, Notifications & Sticky Hamburger Menu */}
             <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0 ml-auto pl-1">
               
+              {/* Quick High Contrast Toggle in Top Navbar */}
+              {onToggleHighContrast && (
+                <button
+                  type="button"
+                  id="header-contrast-toggle-btn"
+                  onClick={onToggleHighContrast}
+                  className={`flex items-center space-x-1 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-black border transition-all active:scale-95 min-h-[44px] ${
+                    highContrast
+                      ? 'bg-amber-400 text-stone-950 border-white ring-2 ring-amber-400 shadow-xs'
+                      : theme === 'light'
+                        ? 'bg-amber-50 hover:bg-amber-100 text-stone-800 border-amber-200 shadow-2xs'
+                        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                  }`}
+                  aria-pressed={highContrast}
+                  aria-label={highContrast ? 'Disable high contrast mode' : 'Enable high contrast mode'}
+                  title={highContrast ? 'High Contrast Mode: Active (Click to toggle)' : 'Enable High Contrast Mode'}
+                >
+                  <Contrast className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">{highContrast ? 'Contrast ON' : 'Contrast'}</span>
+                </button>
+              )}
+
               {/* Quick Theme Toggle Button in Top Navbar */}
               {onToggleTheme && (
                 <button

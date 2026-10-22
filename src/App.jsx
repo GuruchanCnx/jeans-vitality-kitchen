@@ -6,6 +6,7 @@ import SearchBar from './components/SearchBar';
 import RecipeList from './components/RecipeList';
 import ShoppingList from './components/ShoppingList';
 import WaterTracker from './components/WaterTracker';
+import { DailyHabitTracker } from './components/DailyHabitTracker';
 import WeeklyMealPlanDashboard from './components/WeeklyMealPlanDashboard';
 import MealPlanDashboard from './components/MealPlanDashboard';
 import SeniorRecipeModal from './components/SeniorRecipeModal';
@@ -1067,27 +1068,9 @@ const App = () => {
         onToggleTheme={toggleTheme}
         onToggleHighContrast={toggleHighContrast}
         onNavigate={handleNavigate}
-        fontSizeControls={
-          <div className="flex items-center space-x-1 p-1 rounded-xl backdrop-blur-md bg-amber-100/70 dark:bg-slate-800/80 border border-amber-300/60 dark:border-slate-700">
-            <button
-              onClick={decreaseFontSize}
-              className="p-1 rounded-lg transition-all duration-150 hover:bg-white/80 dark:hover:bg-slate-700 text-stone-900 dark:text-slate-100 active:scale-95"
-              aria-label="Decrease font size"
-            >
-              <Minus className="h-4 w-4" />
-            </button>
-            <span className="text-xs font-bold px-1.5 text-stone-900 dark:text-slate-100">
-              A
-            </span>
-            <button
-              onClick={increaseFontSize}
-              className="p-1 rounded-lg transition-all duration-150 hover:bg-white/80 dark:hover:bg-slate-700 text-stone-900 dark:text-slate-100 active:scale-95"
-              aria-label="Increase font size"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-        }
+        fontSize={fontSize}
+        onIncreaseFontSize={increaseFontSize}
+        onDecreaseFontSize={decreaseFontSize}
       />
 
       {/* Hero Component with Warm Inviting Welcome & 7-Day Plan CTA */}
@@ -1154,6 +1137,9 @@ const App = () => {
 
         {/* Daily Water Intake Tracker Section */}
         <WaterTracker theme={theme} />
+
+        {/* Daily Senior Health Habit Tracker Section */}
+        <DailyHabitTracker theme={theme} highContrast={highContrast} />
 
         {/* Recipe Search & Filter Section */}
         <section id="search-section" aria-label="Recipe Search">
@@ -1271,9 +1257,9 @@ const App = () => {
           </div>
 
           {/* Render Active View */}
-          {viewMode === 'dashboard' ? (
+          {viewMode === 'dashboard' || viewMode === 'daily' ? (
             <div id="weekly-dashboard-container" className="animate-in fade-in duration-300">
-              <WeeklyMealPlanDashboard
+              <MealPlanDashboard
                 mealPlan={mealPlan}
                 theme={theme}
                 highContrast={highContrast}
@@ -1826,77 +1812,7 @@ const App = () => {
         />
       )}
 
-      {/* Senior Accessibility Floating Quick Toolbar */}
-      <aside 
-        id="floating-accessibility-toolbar"
-        aria-label="Accessibility quick controls"
-        className={`fixed bottom-5 left-4 sm:left-6 z-40 flex items-center p-1.5 rounded-2xl shadow-xl backdrop-blur-xl border transition-all duration-300 ${
-          highContrast
-            ? 'bg-stone-950 text-white border-amber-400 ring-2 ring-amber-400 shadow-2xl'
-            : theme === 'light'
-              ? 'bg-white/95 text-stone-900 border-amber-200/90 shadow-[0_8px_30px_rgba(217,119,6,0.18)]'
-              : 'bg-slate-900/95 text-white border-slate-700 shadow-2xl'
-        }`}
-      >
-        {/* High Contrast Mode Global Toggle */}
-        <button
-          type="button"
-          id="floating-high-contrast-toggle"
-          onClick={toggleHighContrast}
-          aria-pressed={highContrast}
-          aria-label={highContrast ? 'Disable high contrast accessibility mode' : 'Enable high contrast accessibility mode'}
-          title={highContrast ? 'High Contrast Mode: Active (Click to switch to Default Theme)' : 'Enable High Contrast Mode for enhanced senior readability'}
-          className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all active:scale-95 ${
-            highContrast
-              ? 'bg-amber-400 text-stone-950 border border-stone-950 shadow-xs'
-              : 'bg-amber-100 hover:bg-amber-200 text-amber-950 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-amber-300 border border-amber-300/60 dark:border-slate-700'
-          }`}
-        >
-          <Contrast className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">{highContrast ? 'Contrast: ON' : 'High Contrast'}</span>
-          <span className="sm:hidden">{highContrast ? 'ON' : 'Contrast'}</span>
-        </button>
 
-        <div className="h-5 w-px bg-stone-200 dark:bg-slate-700 mx-1" />
-
-        {/* Font Size Adjusters */}
-        <div className="flex items-center space-x-0.5">
-          <button
-            type="button"
-            onClick={decreaseFontSize}
-            title="Decrease text size"
-            aria-label="Decrease text size"
-            className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800 text-stone-700 dark:text-slate-200 transition-colors"
-          >
-            <Minus className="w-3.5 h-3.5" />
-          </button>
-          <span className="text-xs font-black px-1 text-amber-600 dark:text-amber-400 select-none">
-            {fontSize === 'small' ? 'A' : fontSize === 'medium' ? 'A+' : fontSize === 'large' ? 'A++' : 'MAX'}
-          </span>
-          <button
-            type="button"
-            onClick={increaseFontSize}
-            title="Increase text size"
-            aria-label="Increase text size"
-            className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800 text-stone-700 dark:text-slate-200 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="h-5 w-px bg-stone-200 dark:bg-slate-700 mx-1" />
-
-        {/* Theme Toggle */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-          aria-label={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-          className="p-2 rounded-xl hover:bg-stone-100 dark:hover:bg-slate-800 text-xs font-bold transition-colors"
-        >
-          {theme === 'light' ? '🌙' : '☀️'}
-        </button>
-      </aside>
 
       {/* Back to Top Floating Glass Button */}
       {showBackToTop && (

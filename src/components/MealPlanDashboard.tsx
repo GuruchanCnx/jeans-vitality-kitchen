@@ -12,12 +12,17 @@ import {
   CheckCircle2,
   Shuffle,
   Activity,
-  Heart
+  Heart,
+  FolderHeart,
+  BookmarkPlus
 } from 'lucide-react';
 import { RecipeCard, Recipe } from './RecipeCard';
 import { getMealMeta, getMealTags } from '../data/recipeImages';
 import SeniorRecipeModal from './SeniorRecipeModal';
 import { DailyMacroNutritionChart } from './DailyMacroNutritionChart';
+import { DailyHabitTracker } from './DailyHabitTracker';
+import { RecipeCollectionsModal } from './RecipeCollectionsModal';
+import { getSavedCollections, RecipeCollection } from '../utils/collections';
 
 export interface DayMeal {
   description: string;
@@ -74,6 +79,20 @@ export const MealPlanDashboard: React.FC<MealPlanDashboardProps> = ({
   const [activeMealPlan, setActiveMealPlan] = useState<DayPlan[]>(mealPlan);
   const [isReshuffled, setIsReshuffled] = useState<boolean>(false);
   const [modalMeal, setModalMeal] = useState<any | null>(null);
+  const [showCollectionsModal, setShowCollectionsModal] = useState<boolean>(false);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+
+  // Load collections for filtering
+  const [collections, setCollections] = useState<RecipeCollection[]>(() => getSavedCollections());
+
+  useEffect(() => {
+    setCollections(getSavedCollections());
+  }, [showCollectionsModal]);
+
+  const activeCollection = useMemo(() => {
+    if (!selectedCollectionId) return null;
+    return collections.find(c => c.id === selectedCollectionId) || null;
+  }, [collections, selectedCollectionId]);
 
   // Favorites state with persistence
   const [favorites, setFavorites] = useState<Record<string, boolean>>(() => {
@@ -147,6 +166,13 @@ export const MealPlanDashboard: React.FC<MealPlanDashboardProps> = ({
     const meta = getMealMeta(origDay, origType || mealType);
     const tags = getMealTags(meal, meta);
 
+    // Collection filter
+    if (selectedCollectionId && activeCollection) {
+      const mealIdKey = `${dayId}-${mealType}`;
+      const hasKey = activeCollection.recipeKeys.some(k => k === metaKey || k === mealIdKey);
+      if (!hasKey) return false;
+    }
+
     // Tag filter
     if (activeTag !== 'all') {
       if (activeTag === 'Vegetarian' && !meal.vegetarian) return false;
@@ -204,8 +230,25 @@ export const MealPlanDashboard: React.FC<MealPlanDashboardProps> = ({
             </p>
           </div>
 
-          {/* Quick Toolbar: Reshuffle, Macro Chart Toggle, Print */}
+          {/* Quick Toolbar: Collections, Reshuffle, Macro Chart Toggle, Print */}
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              id="btn-open-collections-dashboard"
+              onClick={() => setShowCollectionsModal(true)}
+              className={`inline-flex items-center space-x-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-black border transition-all active:scale-95 min-h-[44px] ${
+                selectedCollectionId
+                  ? 'bg-amber-600 text-white border-amber-600 shadow-sm ring-2 ring-amber-500/30'
+                  : isLight
+                    ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
+                    : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
+              }`}
+              title="Browse recipe collections (Breakfast Favorites, Easy Dinners, etc.)"
+            >
+              <FolderHeart className="w-4 h-4" />
+              <span>{activeCollection ? `${activeCollection.icon} ${activeCollection.name}` : 'Collections'}</span>
+            </button>
+
             <button
               type="button"
               id="btn-reshuffle-plan"
@@ -369,6 +412,20 @@ export const MealPlanDashboard: React.FC<MealPlanDashboardProps> = ({
                   {t.label}
                 </button>
               ))}
+              {/* Active Collection Filter Banner */}
+              {activeCollection && (
+                <div className="flex items-center space-x-2 bg-amber-500/20 text-amber-900 dark:text-amber-200 px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-700 text-xs font-black">
+                  <span>Filtered: {activeCollection.icon} {activeCollection.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCollectionId(null)}
+                    className="p-0.5 hover:bg-amber-500/30 rounded-md"
+                    title="Clear collection filter"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -387,6 +444,14 @@ export const MealPlanDashboard: React.FC<MealPlanDashboardProps> = ({
           />
         </div>
       )}
+
+      {/* Senior Daily Habit Tracker Section */}
+      <div id="dashboard-daily-habits-section" className="animate-in fade-in duration-300">
+        <DailyHabitTracker 
+          theme={theme} 
+          highContrast={highContrast} 
+        />
+      </div>
 
       {/* 7-DAY MEAL PLAN GRID */}
       <div className="space-y-8">
@@ -527,6 +592,17 @@ export const MealPlanDashboard: React.FC<MealPlanDashboardProps> = ({
           highContrast={highContrast}
           servingSizes={servingSizes}
           onUpdateServingSize={onUpdateServingSize}
+        />
+      )}
+
+      {/* Senior Recipe Collections Modal */}
+      {showCollectionsModal && (
+        <RecipeCollectionsModal
+          isOpen={showCollectionsModal}
+          onClose={() => setShowCollectionsModal(false)}
+          theme={theme}
+          highContrast={highContrast}
+          onSelectCollectionFilter={(colId) => setSelectedCollectionId(colId)}
         />
       )}
     </section>

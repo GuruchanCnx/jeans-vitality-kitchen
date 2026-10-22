@@ -14,9 +14,14 @@ import {
   Sparkles, 
   ShieldCheck,
   Utensils,
-  Leaf
+  Leaf,
+  Volume2,
+  VolumeX,
+  BookmarkPlus
 } from 'lucide-react';
 import { scaleRecipeIngredients } from '../utils/servings';
+import { RecipeSpeaker } from '../utils/speech';
+import { RecipeCollectionsModal } from './RecipeCollectionsModal';
 
 export interface Recipe {
   title: string;
@@ -72,6 +77,30 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'ingredients' | 'steps'>('ingredients');
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({});
+  const [showCollectionsModal, setShowCollectionsModal] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [activeSpeakingStep, setActiveSpeakingStep] = useState<number | null>(null);
+
+  const recipeKey = `${recipe.dayId || 'recipe'}-${(recipe.mealType || 'dish').toLowerCase()}`;
+
+  const handleSpeakDirections = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSpeaking) {
+      RecipeSpeaker.stop();
+      setIsSpeaking(false);
+      setActiveSpeakingStep(null);
+    } else {
+      setIsSpeaking(true);
+      RecipeSpeaker.speakAllSteps(
+        recipe.instructions,
+        recipe.title,
+        (speaking, stepIdx) => {
+          setIsSpeaking(speaking);
+          setActiveSpeakingStep(stepIdx);
+        }
+      );
+    }
+  };
 
   const scaledIngredients = scaleRecipeIngredients(recipe.ingredients, servings);
   const baseProtein = recipe.protein || recipe.nutrition?.protein || 25;
@@ -148,24 +177,39 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             )}
           </div>
 
-          {/* Favorite Button */}
-          {onToggleFavorite && (
+          {/* Favorite & Collections Action Buttons */}
+          <div className="flex items-center space-x-1.5">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleFavorite(recipe);
+                setShowCollectionsModal(true);
               }}
-              className={`p-2 rounded-full backdrop-blur-md pointer-events-auto transition-transform active:scale-95 ${
-                isFavorite
-                  ? 'bg-rose-500 text-white shadow-md'
-                  : 'bg-black/50 text-white hover:bg-black/75 border border-white/20'
-              }`}
-              aria-label={isFavorite ? `Remove ${recipe.title} from favorites` : `Add ${recipe.title} to favorites`}
+              className="p-2 rounded-full backdrop-blur-md pointer-events-auto transition-transform active:scale-95 bg-black/50 text-amber-300 hover:bg-black/75 border border-white/20"
+              aria-label={`Save ${recipe.title} to collections`}
+              title="Add to Recipe Collections"
             >
-              <Heart className={`w-4 h-4 ${isFavorite ? 'fill-white' : ''}`} />
+              <BookmarkPlus className="w-4 h-4 text-amber-300" />
             </button>
-          )}
+
+            {onToggleFavorite && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(recipe);
+                }}
+                className={`p-2 rounded-full backdrop-blur-md pointer-events-auto transition-transform active:scale-95 ${
+                  isFavorite
+                    ? 'bg-rose-500 text-white shadow-md'
+                    : 'bg-black/50 text-white hover:bg-black/75 border border-white/20'
+                }`}
+                aria-label={isFavorite ? `Remove ${recipe.title} from favorites` : `Add ${recipe.title} to favorites`}
+              >
+                <Heart className={`w-4 h-4 ${isFavorite ? 'fill-white' : ''}`} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Bottom Image Stats: Calories, Time, Day */}
@@ -362,28 +406,59 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                 </div>
               ) : (
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                  <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 block">
-                    Tap a step to check off as you cook:
-                  </span>
+                  <div className="flex items-center justify-between pb-1">
+                    <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 block">
+                      Tap step to check off as you cook:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSpeakDirections}
+                      className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-black border transition-all active:scale-95 ${
+                        isSpeaking
+                          ? 'bg-amber-600 text-white border-amber-600 ring-1 ring-amber-400 animate-pulse'
+                          : isLight
+                            ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300'
+                            : 'bg-slate-700 hover:bg-slate-600 text-amber-300 border-slate-600'
+                      }`}
+                      title="Read cooking instructions aloud (0.9x speed)"
+                    >
+                      {isSpeaking ? (
+                        <>
+                          <VolumeX className="w-3 h-3" />
+                          <span>Stop</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3 h-3 text-amber-600 dark:text-amber-300" />
+                          <span>Read Aloud</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <ol className="space-y-1.5 text-xs font-medium">
                     {recipe.instructions.map((step, idx) => {
                       const isChecked = !!checkedSteps[idx];
+                      const isStepSpeaking = isSpeaking && activeSpeakingStep === idx;
                       return (
                         <li
                           key={idx}
                           onClick={(e) => toggleStep(idx, e)}
                           className={`flex items-start p-2 rounded-xl border cursor-pointer transition-all select-none ${
-                            isChecked
-                              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-stone-500 line-through'
-                              : isLight
-                                ? 'bg-white hover:bg-amber-50/60 border-stone-200 text-stone-800'
-                                : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700 text-slate-200'
+                            isStepSpeaking
+                              ? 'bg-amber-100/90 dark:bg-amber-950/80 border-amber-400 text-amber-950 dark:text-amber-100 ring-1 ring-amber-400'
+                              : isChecked
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-stone-500 line-through'
+                                : isLight
+                                  ? 'bg-white hover:bg-amber-50/60 border-stone-200 text-stone-800'
+                                  : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700 text-slate-200'
                           }`}
                         >
                           <div className={`w-5 h-5 rounded-md flex items-center justify-center mr-2 shrink-0 border text-[11px] font-black ${
-                            isChecked
-                              ? 'bg-emerald-600 border-emerald-600 text-white'
-                              : 'bg-stone-100 dark:bg-slate-700 border-stone-300 text-stone-700 dark:text-slate-200'
+                            isStepSpeaking
+                              ? 'bg-amber-500 border-amber-500 text-white'
+                              : isChecked
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'bg-stone-100 dark:bg-slate-700 border-stone-300 text-stone-700 dark:text-slate-200'
                           }`}>
                             {isChecked ? <Check className="w-3.5 h-3.5" /> : idx + 1}
                           </div>
@@ -398,6 +473,18 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           )}
         </div>
       </div>
+
+      {/* Recipe Collections Modal */}
+      {showCollectionsModal && (
+        <RecipeCollectionsModal
+          isOpen={showCollectionsModal}
+          onClose={() => setShowCollectionsModal(false)}
+          recipeKey={recipeKey}
+          recipeTitle={recipe.title}
+          theme={theme}
+          highContrast={highContrast}
+        />
+      )}
     </article>
   );
 };

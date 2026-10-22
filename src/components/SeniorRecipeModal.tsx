@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, Clock, Flame, Heart, Scale, ShieldCheck, CheckCircle2, 
   Copy, Check, Printer, Timer, Play, Pause, RotateCcw, Plus, Minus,
-  Star, Sparkles, ChefHat, Info, Utensils, AlertCircle, Users
+  Star, Sparkles, ChefHat, Info, Utensils, AlertCircle, Users,
+  Volume2, VolumeX, BookmarkPlus, FolderHeart
 } from 'lucide-react';
 import { NutritionData } from '../data/recipeImages';
 import { scaleRecipeIngredients } from '../utils/servings';
+import { RecipeSpeaker } from '../utils/speech';
+import { RecipeCollectionsModal } from './RecipeCollectionsModal';
 
 export interface SeniorRecipeModalProps {
   isOpen: boolean;
@@ -82,6 +85,53 @@ export const SeniorRecipeModal: React.FC<SeniorRecipeModalProps> = ({
   // Copy recipe feedback
   const [copied, setCopied] = useState(false);
 
+  // Text-to-Speech (TTS) State
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [activeSpeakingStep, setActiveSpeakingStep] = useState<number | null>(null);
+
+  // Collections Modal state
+  const [showCollectionsModal, setShowCollectionsModal] = useState(false);
+
+  // Stop speech when unmounting or modal closes
+  useEffect(() => {
+    return () => {
+      RecipeSpeaker.stop();
+    };
+  }, []);
+
+  const handleSpeakAll = () => {
+    if (isSpeaking) {
+      RecipeSpeaker.stop();
+      setIsSpeaking(false);
+      setActiveSpeakingStep(null);
+    } else {
+      setIsSpeaking(true);
+      RecipeSpeaker.speakAllSteps(
+        meal.recipe.instructions,
+        meal.description,
+        (speaking, stepIdx) => {
+          setIsSpeaking(speaking);
+          setActiveSpeakingStep(stepIdx);
+        }
+      );
+    }
+  };
+
+  const handleSpeakSingleStep = (stepText: string, idx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSpeaking && activeSpeakingStep === idx) {
+      RecipeSpeaker.stop();
+      setIsSpeaking(false);
+      setActiveSpeakingStep(null);
+    } else {
+      setIsSpeaking(true);
+      RecipeSpeaker.speakStep(`Step ${idx + 1}: ${stepText}`, idx, (speaking, stepIdx) => {
+        setIsSpeaking(speaking);
+        setActiveSpeakingStep(stepIdx);
+      });
+    }
+  };
+
   // Subtle mount animation state for senior-friendly fade-in and scale
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -92,7 +142,10 @@ export const SeniorRecipeModal: React.FC<SeniorRecipeModalProps> = ({
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        RecipeSpeaker.stop();
+        onClose();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -268,15 +321,18 @@ ${meal.nutrition?.seniorHealthHighlight || "Optimized for muscle protein synthes
           <button
             type="button"
             id="close-senior-recipe-modal"
-            onClick={onClose}
+            onClick={() => {
+              RecipeSpeaker.stop();
+              onClose();
+            }}
             className="absolute top-4 right-4 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/20 transition-all active:scale-95 shadow-md focus:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-400"
             aria-label="Close recipe details"
           >
             <X className="w-5 h-5" />
           </button>
 
-          {/* Quick Actions overlay: Favorite & Rating */}
-          <div className="absolute top-4 left-4 flex items-center space-x-2">
+          {/* Quick Actions overlay: Favorite, Collection & Rating */}
+          <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleToggleFavorite}
@@ -288,7 +344,20 @@ ${meal.nutrition?.seniorHealthHighlight || "Optimized for muscle protein synthes
               aria-label={isFavorite ? "Remove from favorite recipes" : "Save as favorite recipe"}
             >
               <Heart className={`w-3.5 h-3.5 ${isFavorite ? 'fill-white' : 'text-rose-400'}`} />
-              <span>{isFavorite ? 'Saved Favorite' : 'Favorite'}</span>
+              <span>{isFavorite ? 'Saved' : 'Favorite'}</span>
+            </button>
+
+            {/* Save to Collections Modal Trigger */}
+            <button
+              type="button"
+              id="btn-save-to-collection-modal"
+              onClick={() => setShowCollectionsModal(true)}
+              className="px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md border bg-black/60 text-amber-300 hover:bg-black/80 border-white/20 flex items-center space-x-1.5 transition-all shadow-md active:scale-95"
+              aria-label="Add this recipe to a senior collection"
+              title="Organize recipe into collections (e.g. Breakfast Favorites, Easy Dinners)"
+            >
+              <BookmarkPlus className="w-3.5 h-3.5 text-amber-300" />
+              <span>Collection</span>
             </button>
 
             {/* 5-Star Rating Buttons */}
@@ -611,48 +680,138 @@ ${meal.nutrition?.seniorHealthHighlight || "Optimized for muscle protein synthes
               </ul>
             </div>
 
-            {/* Checkable Cooking Instructions */}
-            <div className={`p-4 sm:p-5 rounded-2xl border ${
+            {/* Checkable Cooking Instructions with Senior Text-to-Speech (TTS) */}
+            <div className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${
               isLight ? 'bg-white border-amber-200/90' : 'bg-slate-800/50 border-slate-700'
             }`}>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className={`text-sm font-black uppercase tracking-wider flex items-center space-x-1.5 ${
-                  isLight ? 'text-stone-900' : 'text-white'
-                }`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-amber-200/50 dark:border-slate-700">
+                <div className="flex items-center space-x-1.5">
                   <ChefHat className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span>Jean's Step-by-Step Directions</span>
-                </h3>
-                <span className="text-[11px] text-stone-500 dark:text-slate-400">
-                  Tap step to check off
-                </span>
+                  <h3 className={`text-sm font-black uppercase tracking-wider ${
+                    isLight ? 'text-stone-900' : 'text-white'
+                  }`}>
+                    Step-by-Step Directions
+                  </h3>
+                </div>
+
+                {/* Senior Audio Voice Bar (SpeechSynthesis) */}
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    id="btn-speak-all-instructions"
+                    onClick={handleSpeakAll}
+                    className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 border min-h-[36px] ${
+                      isSpeaking
+                        ? 'bg-amber-600 text-white border-amber-600 ring-2 ring-amber-500/30 animate-pulse'
+                        : isLight
+                          ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300'
+                          : 'bg-amber-950/60 hover:bg-amber-900 text-amber-200 border-amber-800'
+                    }`}
+                    title="Have Jean's kitchen assistant read instructions aloud at a gentle 0.9x speed"
+                  >
+                    {isSpeaking ? (
+                      <>
+                        <VolumeX className="w-3.5 h-3.5" />
+                        <span>Stop Audio</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                        <span>Read Aloud</span>
+                      </>
+                    )}
+                  </button>
+                  <span className="text-[11px] text-stone-500 dark:text-slate-400 hidden sm:inline">
+                    (0.9x Senior Pace)
+                  </span>
+                </div>
               </div>
+
+              {isSpeaking && (
+                <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center justify-between text-xs text-amber-800 dark:text-amber-200">
+                  <div className="flex items-center space-x-2">
+                    <span className="flex h-2 w-2 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                    <span className="font-bold">
+                      {activeSpeakingStep !== null && activeSpeakingStep >= 0 
+                        ? `Reading Step ${activeSpeakingStep + 1} aloud...` 
+                        : "Preparing to read instructions aloud..."}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      RecipeSpeaker.stop();
+                      setIsSpeaking(false);
+                      setActiveSpeakingStep(null);
+                    }}
+                    className="text-[11px] font-black underline hover:text-amber-900"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
               <ol className="space-y-2.5 text-xs sm:text-sm font-medium">
                 {meal.recipe.instructions.map((inst, idx) => {
                   const isDone = completedSteps[idx];
+                  const isCurrentSpeaking = isSpeaking && activeSpeakingStep === idx;
+
                   return (
                     <li 
                       key={idx} 
                       onClick={() => toggleStep(idx)}
-                      className={`flex items-start space-x-2.5 p-2 rounded-xl cursor-pointer transition-all ${
-                        isDone 
-                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 line-through opacity-75' 
-                          : 'hover:bg-amber-50/70 dark:hover:bg-slate-700/60'
+                      className={`flex items-start justify-between space-x-2.5 p-2.5 rounded-xl cursor-pointer transition-all border ${
+                        isCurrentSpeaking
+                          ? 'bg-amber-100/90 dark:bg-amber-950/80 border-amber-400 text-amber-950 dark:text-amber-100 ring-2 ring-amber-400 shadow-sm'
+                          : isDone 
+                            ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 text-emerald-900 dark:text-emerald-200 line-through opacity-75' 
+                            : isLight
+                              ? 'bg-stone-50/50 hover:bg-amber-50/70 border-stone-200 text-stone-800'
+                              : 'bg-slate-850 hover:bg-slate-800 border-slate-750 text-slate-200'
                       }`}
                     >
-                      <button 
-                        type="button" 
-                        aria-label={`Step ${idx + 1}`}
-                        className="mt-0.5 shrink-0"
+                      <div className="flex items-start space-x-2.5 min-w-0">
+                        <button 
+                          type="button" 
+                          aria-label={`Step ${idx + 1}`}
+                          className="mt-0.5 shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleStep(idx);
+                          }}
+                        >
+                          {isDone ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          ) : (
+                            <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-black ${
+                              isCurrentSpeaking 
+                                ? 'bg-amber-500 text-white border-amber-500' 
+                                : 'border-stone-400 dark:border-slate-500'
+                            }`}>
+                              {idx + 1}
+                            </span>
+                          )}
+                        </button>
+                        <span className="leading-relaxed">{inst}</span>
+                      </div>
+
+                      {/* Individual Step Speaker Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => handleSpeakSingleStep(inst, idx, e)}
+                        className={`p-1.5 rounded-lg border shrink-0 transition-all active:scale-95 ${
+                          isCurrentSpeaking
+                            ? 'bg-amber-500 text-white border-amber-500'
+                            : 'bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-slate-700 text-stone-600 dark:text-slate-300 border-stone-200 dark:border-slate-700'
+                        }`}
+                        title={`Read step ${idx + 1} aloud`}
+                        aria-label={`Read step ${idx + 1} aloud`}
                       >
-                        {isDone ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        ) : (
-                          <span className="w-4 h-4 rounded-full border border-stone-400 dark:border-slate-500 flex items-center justify-center text-[10px] font-bold">
-                            {idx + 1}
-                          </span>
-                        )}
+                        <Volume2 className="w-3.5 h-3.5" />
                       </button>
-                      <span className="leading-relaxed">{inst}</span>
                     </li>
                   );
                 })}
@@ -713,13 +872,28 @@ ${meal.nutrition?.seniorHealthHighlight || "Optimized for muscle protein synthes
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              RecipeSpeaker.stop();
+              onClose();
+            }}
             className="px-6 py-2 rounded-xl text-xs sm:text-sm font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-600/20 active:scale-95 transition-all"
           >
             Close Recipe
           </button>
         </div>
       </div>
+
+      {/* Senior Recipe Collections Modal */}
+      {showCollectionsModal && (
+        <RecipeCollectionsModal
+          isOpen={showCollectionsModal}
+          onClose={() => setShowCollectionsModal(false)}
+          recipeKey={mealKey}
+          recipeTitle={meal.description}
+          theme={theme}
+          highContrast={highContrast}
+        />
+      )}
     </div>
   );
 };
