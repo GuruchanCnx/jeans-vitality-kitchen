@@ -177,7 +177,7 @@ export const DailyHabitTracker: React.FC<DailyHabitTrackerProps> = ({
   };
 
   const handleResetDefaults = () => {
-    setHabits(DEFAULT_COLLECTIONS ? DEFAULT_HABITS : DEFAULT_HABITS);
+    setHabits(DEFAULT_HABITS);
     setCheckedIds({});
   };
 

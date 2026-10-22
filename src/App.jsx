@@ -10,6 +10,7 @@ import { DailyHabitTracker } from './components/DailyHabitTracker';
 import WeeklyMealPlanDashboard from './components/WeeklyMealPlanDashboard';
 import MealPlanDashboard from './components/MealPlanDashboard';
 import SeniorRecipeModal from './components/SeniorRecipeModal';
+import { RecipeCollectionsModal } from './components/RecipeCollectionsModal';
 import { getMealMeta } from './data/recipeImages';
 import { scaleRecipeIngredients } from './utils/servings';
 
@@ -17,6 +18,7 @@ const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [expandedRecipes, setExpandedRecipes] = useState({});
+  const [showCollectionsModal, setShowCollectionsModal] = useState(false);
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem('jeans_vitality_theme') || 'light';
@@ -195,6 +197,10 @@ const App = () => {
     } else if (href === '#water-tracker') {
       setTimeout(() => {
         document.getElementById('water-tracker')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    } else if (href === '#daily-habit-tracker' || href === '#habits') {
+      setTimeout(() => {
+        document.getElementById('daily-habit-tracker')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 60);
     } else if (href === '#tips') {
       setTimeout(() => {
@@ -919,6 +925,7 @@ const App = () => {
     { name: 'Recipes', href: '#recipes', icon: ChefHat },
     { name: '7-Day Plan', href: '#meal-plan', icon: Calendar },
     { name: 'Hydration', href: '#water-tracker', icon: Droplets },
+    { name: 'Daily Habits', href: '#daily-habit-tracker', icon: Sparkles },
     { name: 'Shopping List', href: '#shopping-list', icon: ShoppingCart },
     { name: 'Kitchen Tips', href: '#tips', icon: Book },
   ];
@@ -1071,6 +1078,7 @@ const App = () => {
         fontSize={fontSize}
         onIncreaseFontSize={increaseFontSize}
         onDecreaseFontSize={decreaseFontSize}
+        onOpenCollections={() => setShowCollectionsModal(true)}
       />
 
       {/* Hero Component with Warm Inviting Welcome & 7-Day Plan CTA */}
@@ -1809,6 +1817,23 @@ const App = () => {
           highContrast={highContrast}
           servingSizes={servingSizes}
           onUpdateServingSize={updateServingSize}
+        />
+      )}
+
+      {/* Global Recipe Collections Modal */}
+      {showCollectionsModal && (
+        <RecipeCollectionsModal
+          isOpen={showCollectionsModal}
+          onClose={() => setShowCollectionsModal(false)}
+          theme={theme}
+          highContrast={highContrast}
+          onSelectCollectionFilter={() => {
+            setViewMode('dashboard');
+            setTimeout(() => {
+              const el = document.getElementById('meal-plan-dashboard') || document.getElementById('recipes');
+              el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 60);
+          }}
         />
       )}
 

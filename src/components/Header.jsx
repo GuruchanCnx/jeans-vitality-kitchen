@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { 
   ChefHat, Menu, X, Utensils, Calendar, BookOpen, Heart, 
   Sparkles, ShoppingCart, Droplets, Contrast, Moon, Sun, 
-  Bell, BellRing, Minus, Plus, ChevronRight, LayoutGrid
+  Bell, BellRing, Minus, Plus, ChevronRight, LayoutGrid,
+  FolderHeart
 } from 'lucide-react';
 
 /**
  * Sticky Hamburger Menu Navbar Component
  * Specifically optimized for iPad Air 2, tablets, phones, and desktops.
  * Prevents horizontal layout bleed and consolidates Contrast, Theme, Font Size,
- * Notifications, and all navigation links inside the accessible hamburger menu.
+ * Collections, Notifications, and all navigation links inside the accessible hamburger menu.
  */
 export const Header = ({
   title = "Jean's Vitality Kitchen",
@@ -24,7 +25,8 @@ export const Header = ({
   onIncreaseFontSize,
   onDecreaseFontSize,
   onNavigate,
-  onOpenNotifications
+  onOpenNotifications,
+  onOpenCollections
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -184,6 +186,27 @@ export const Header = ({
                 >
                   <BellRing className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                   <span className="hidden md:inline">Alerts</span>
+                </button>
+              )}
+
+              {/* Quick Recipe Collections Button in Top Navbar */}
+              {onOpenCollections && (
+                <button
+                  type="button"
+                  id="header-collections-btn"
+                  onClick={onOpenCollections}
+                  className={`flex items-center space-x-1.5 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold border transition-all active:scale-95 min-h-[44px] ${
+                    highContrast
+                      ? 'bg-amber-400 text-stone-950 border-white ring-2 ring-amber-400'
+                      : theme === 'light'
+                        ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
+                        : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
+                  }`}
+                  aria-label="Open saved recipe collections"
+                  title="Recipe Collections (Breakfast Favorites, Easy Dinners, etc.)"
+                >
+                  <FolderHeart className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span className="hidden lg:inline">Collections</span>
                 </button>
               )}
 
@@ -372,6 +395,28 @@ export const Header = ({
                     <div>
                       <h4 className="text-xs sm:text-sm font-black">iOS & Android Alerts</h4>
                       <p className="text-[11px] text-stone-500 dark:text-slate-400">Hydration & meal reminders</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-stone-400" />
+                </button>
+              )}
+
+              {/* Recipe Collections Trigger in Drawer */}
+              {onOpenCollections && (
+                <button
+                  type="button"
+                  id="drawer-collections-btn"
+                  onClick={() => {
+                    onOpenCollections();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 shadow-2xs text-left hover:border-amber-400 transition-colors"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <FolderHeart className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-black">Recipe Collections</h4>
+                      <p className="text-[11px] text-stone-500 dark:text-slate-400">Breakfast favorites & custom lists</p>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-stone-400" />
